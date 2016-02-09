@@ -1,4 +1,5 @@
 /* eval : interprete une ligne de commande passee en parametre       */
+#include "jobs.h"
 #include "myshell.h"
 
 // fonctions externes
@@ -26,8 +27,10 @@ void eval(char *cmdline)
             }
         }
 
+        int jobid = add_new_job(pid, cmdline);
         if (!bg) { // le pere attend fin du travail de premier plan
             int status;
+            printf("%d %d\n", jobid, pid);
             if (waitpid(pid, &status, 0) < 0)
                 unix_error("waitfg: waitpid error");
         }
@@ -41,6 +44,10 @@ void eval(char *cmdline)
 // l'executer et renvoyer "vrai"
 int builtin_command(char **argv)
 {
+    if (!strcmp(argv[0], "jobs")) {
+        print_jobs();
+        return 1;
+    }
     if (!strcmp(argv[0], "quit")) // commande "quitter"
         exit(0);
     if (!strcmp(argv[0], "&"))    // ignorer & tout seul

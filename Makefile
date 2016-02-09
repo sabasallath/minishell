@@ -30,7 +30,10 @@ eval.o: eval.c myshell.h
 myshell.o: myshell.c myshell.h
 	$(CC) $(CFLAGS) -c -o $@ $<	
 
-myshell: myshell.o eval.o parseline.o csapp.o
+jobs.o: jobs.c jobs.h
+	$(CC) $(CFLAGS) -c -o $@ $<	
+
+myshell: myshell.o eval.o parseline.o csapp.o jobs.o
 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS)
 
 clean:
