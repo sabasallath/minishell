@@ -30,12 +30,11 @@ void eval(char *cmdline)
         int jobid = add_new_job(pid, cmdline);
         if (!bg) { // le pere attend fin du travail de premier plan
             int status;
-            printf("%d %d\n", jobid, pid);
             if (waitpid(pid, &status, 0) < 0)
                 unix_error("waitfg: waitpid error");
         }
         else       // travail d'arriere-plan, on imprime le pid
-            printf("%d %s", pid, cmdline);
+            printf("[%d] %d %s", jobid, pid, cmdline);
     }
     return;
 }
