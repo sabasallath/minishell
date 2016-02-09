@@ -21,7 +21,7 @@ void eval(char *cmdline)
     if (!builtin_command(argv)) {    // commande integree ?
         // si oui, executee directement
         if ((pid = Fork()) == 0) {   // si non, executee par un fils
-            if (execve(argv[0], argv, environ) < 0) {
+            if (execvp(argv[0], argv) < 0) {
                 printf("%s: Command not found.\n", argv[0]);
                 exit(0);
             }
