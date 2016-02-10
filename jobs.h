@@ -22,14 +22,14 @@ typedef struct {
 
 Job jobs[MAXJOBS];
 
+void init_jobs();
 int first_job_for_status(JobStatus status);
 int first_free_job();
 int get_fg();
 int add_new_job (pid_t pid, char* cmdline);
 int get_job_by_pid (pid_t pid);
-void free_job (int i);
+void free_job (int jobid);
 void print_jobs();
 void handle_done();
-void handler_sigchld(int sig);
 
 #endif

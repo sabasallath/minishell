@@ -11,15 +11,15 @@ CFLAGS = -Wall -Werror -g
 LDFLAGS =
 
 # Note: -lnsl does not seem to work on Mac OS but will
-# probably be necessary on Solaris for linking network-related functions 
+# probably be necessary on Solaris for linking network-related functions
 #LIBS += -lsocket -lnsl -lrt
 LIBS += -lpthread
 
 
-all: myshell	
+all: myshell
 
 csapp.o: csapp.c csapp.h
-	$(CC) $(CFLAGS) -c -o $@ $<	
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 parseline.o: parseline.c myshell.h
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -28,15 +28,18 @@ eval.o: eval.c myshell.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 myshell.o: myshell.c myshell.h
-	$(CC) $(CFLAGS) -c -o $@ $<	
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 jobs.o: jobs.c jobs.h
-	$(CC) $(CFLAGS) -c -o $@ $<	
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 builtin.o: builtin.c builtin.h
-	$(CC) $(CFLAGS) -c -o $@ $<	
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-myshell: myshell.o eval.o parseline.o csapp.o jobs.o builtin.o
+handlers.o: handlers.c handlers.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+myshell: myshell.o eval.o parseline.o csapp.o jobs.o builtin.o handlers.o
 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS)
 
 clean:

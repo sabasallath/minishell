@@ -3,12 +3,22 @@
 
 Job jobs[MAXJOBS] = {{0}};
 
+void init_jobs() {
+	int i;
+	for (i=0; i < MAXJOBS; i++) {
+		jobs[i].status = FREE;
+	}
+}
+
 int first_job_for_status(JobStatus status) {
 	int i;
-	for (i=0; i < MAXJOBS && (jobs[i].status & status); i++);
-	if (i == MAXJOBS) return -1;
+	for (i=0; i < MAXJOBS; i++) {
+		if (jobs[i].status & status) {
+			break;
+		}
+	}
 
-	return i;
+	return i == MAXJOBS ? -1 : i;
 }
 
 int first_free_job() {
@@ -52,7 +62,7 @@ void print_jobs() {
 		if (jobs[i].status == STOPPED || jobs[i].status == BG) {
 			printf("[%d] %s %s",
 					i,
-					jobs[i].status == STOPPED ? "STOPPED" : "RUNNING",
+					jobs[i].status == STOPPED ? "Stopped" : "Running",
 					jobs[i].cmdline);
 		}
 	}
@@ -64,20 +74,9 @@ void handle_done() {
 		if (jobs[i].status == DONE) {
 			printf("[%d] %s %s",
 					i,
-					"DONE",
+					"Done",
 					jobs[i].cmdline);
 			free_job(i);
 		}
 	}
-}
-
-void handler_sigchld(int sig) {
-    pid_t pid;
-
-    while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
-    	int jobid = get_job_by_pid(pid);
-    	jobs[jobid].status = DONE;
-    }
-
-    return;
 }

@@ -1,21 +1,6 @@
 #include "jobs.h"
 #include "myshell.h"
-
-void handler_sigint(int sig) {
-	int jobid = get_fg();
-	if (jobid > -1) {
-		Kill(jobs[jobid].pid, SIGINT);
-	}
-	printf("\n");
-}
-
-void handler_sigtstp(int sig) {
-	int jobid = get_fg();
-	if (jobid > -1) {
-		jobs[jobid].status = STOPPED;
-		Kill(jobs[jobid].pid, SIGSTOP);
-	}
-}
+#include "handlers.h"
 
 // fonctions externes
 void eval(char*cmdline);
@@ -25,9 +10,8 @@ int builtin_command(char **argv);
 int main() {
     char cmdline[MAXLINE];                 // ligne de commande
 
-	Signal(SIGCHLD, handler_sigchld);
-	Signal(SIGINT, handler_sigint);
-	Signal(SIGTSTP, handler_sigtstp);
+    init_jobs();
+	shell_signals();
 
     while (1) {                            // boucle d'interpretation
         printf("<my_shell> ");             // message d'invite

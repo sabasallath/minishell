@@ -4,6 +4,10 @@
 
 
 void fg (int jobid) {
+    if (jobs[jobid].status == STOPPED) {
+        Kill(jobs[jobid].pid, SIGCONT);
+    }
+
     jobs[jobid].status = FG;
 	while (jobs[jobid].status == FG) {
 	    sleep(0);
@@ -15,9 +19,13 @@ void fg (int jobid) {
 }
 
 int read_jobid (char* arg) {
+    if (*arg == '\0') {
+        return -1;
+    }
+
 	char* end = arg;
     int jobid = strtol(arg, &end, 16);
-    if (*arg == '\0' || *end != '\0') {
+    if (*end != '\0') {
         return -1;
     }
 
