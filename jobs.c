@@ -56,14 +56,17 @@ void free_job (int jobid) {
 	jobs[jobid].status = FREE;
 }
 
+void print_job_status(int jobid, char* status) {
+	printf("[%d] %s %s", jobid, status, jobs[jobid].cmdline);
+}
+
 void print_jobs() {
 	int i;
 	for (i = 0; i < MAXJOBS; i++) {
-		if (jobs[i].status == STOPPED || jobs[i].status == BG) {
-			printf("[%d] %s %s",
-					i,
-					jobs[i].status == STOPPED ? "Stopped" : "Running",
-					jobs[i].cmdline);
+		if (jobs[i].status & (STOPPED | BG)) {
+			print_job_status(i, jobs[i].status == STOPPED
+					? "Stopped"
+					: "Running");
 		}
 	}
 }
@@ -72,10 +75,7 @@ void handle_done() {
 	int i;
 	for (i = 0; i < MAXJOBS; i++) {
 		if (jobs[i].status == DONE) {
-			printf("[%d] %s %s",
-					i,
-					"Done",
-					jobs[i].cmdline);
+			print_job_status(i, "Done");
 			free_job(i);
 		}
 	}

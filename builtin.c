@@ -65,11 +65,11 @@ void fg (int jobid) {
 void bg (int jobid) {
     Kill(jobs[jobid].pid, SIGCONT);
     jobs[jobid].status = BG;
-    printf("[%d] Continued %s\n", jobid, jobs[jobid].cmdline);
+    print_job_status(jobid, "Continued");
 }
 
 void stop (int jobid) {
     Kill(jobs[jobid].pid, SIGSTOP);
     jobs[jobid].status = STOPPED;
-    printf("[%d] Stopped %s\n", jobid, jobs[jobid].cmdline);
+    print_job_status(jobid, "Stopped");
 }

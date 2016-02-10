@@ -4,19 +4,19 @@
 
 void handler_sigint(int sig) {
     int jobid = get_fg();
-    if (jobid > -1) {
+    if (jobid != -1) {
         Kill(jobs[jobid].pid, SIGINT);
+        printf("\n");
     }
-    printf("\n");
 }
 
 void handler_sigtstp(int sig) {
     int jobid = get_fg();
-    if (jobid > -1) {
+    if (jobid != -1) {
         Kill(jobs[jobid].pid, SIGSTOP);
         jobs[jobid].status = STOPPED;
+        printf("\n");
     }
-    printf("\n");
 }
 
 void handler_sigchld(int sig) {
@@ -24,10 +24,11 @@ void handler_sigchld(int sig) {
 
     while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
         int jobid = get_job_by_pid(pid);
-        jobs[jobid].status = DONE;
+        if (jobid == -1)
+            printf("Got a SIGCHLD for child with pid %d, but no corresponding job found\n", pid);
+        else
+            jobs[jobid].status = DONE;
     }
-
-    return;
 }
 
 void shell_signals() {

@@ -32,9 +32,9 @@ int eval(char *cmdline) {
         }
 
         int jobid = add_new_job(pid, cmdline);
-        if (!bg) // le pere attend fin du travail de premier plan
+        if (!bg)
             fg(jobid);
-        else       // travail d'arriere-plan, on imprime le pid
+        else
             printf("[%d] %d %s", jobid, pid, cmdline);
     }
 
