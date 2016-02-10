@@ -7,7 +7,7 @@ void handler_sigint(int sig) {
     if (jobid > -1) {
         Kill(jobs[jobid].pid, SIGINT);
     }
-    printf("\n");
+    printf("<\n");
 }
 
 void handler_sigtstp(int sig) {
@@ -16,7 +16,7 @@ void handler_sigtstp(int sig) {
         Kill(jobs[jobid].pid, SIGSTOP);
         jobs[jobid].status = STOPPED;
     }
-    printf("\n");
+    printf(">\n");
 }
 
 void handler_sigchld(int sig) {

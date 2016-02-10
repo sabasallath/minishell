@@ -7,8 +7,7 @@
 int parseline(char *buf, char **argv);
 int builtin_command(char **argv);
 
-void eval(char *cmdline)
-{
+int eval(char *cmdline) {
     char *argv[MAXARGS]; // argv pour execve()
     char buf[MAXLINE];   // contient ligne commande modifiee
     int bg;              // arriere-plan ou premier plan ?
@@ -16,6 +15,11 @@ void eval(char *cmdline)
 
     strcpy(buf, cmdline);
     bg = parseline(buf, argv);
+
+    if (!strcmp(argv[0], "exit")) // commande "exit"
+        return 0;
+    if (!strcmp(argv[0], "quit")) // commande "quitter"
+        return 0;
 
     if (!builtin_command(argv)) {    // commande integree ?
         // si oui, executee directement
@@ -36,31 +40,7 @@ void eval(char *cmdline)
 
     handle_done();
 
-    return;
-}
-
-void run_fg(char** argv) {
-    int jobid;
-    if (argv[1] == NULL) {
-        jobid = default_fg_jobid();
-        if (jobid == -1) {
-            fprintf(stderr, "No background job");
-            return;
-        }
-    }
-    else {
-        jobid = read_jobid(argv[1]);
-        if (jobid == -1) {
-            fprintf(stderr, "Wrong jobid: %s, expected number between 0 and 9", argv[1]);
-            return;
-        }
-    }
-
-    fg(jobid);
-}
-
-void run_bg(char** argv) {
-    printf("bg not implemented yet !");
+    return 1;
 }
 
 // si le premier parametre est une commande integree,
@@ -79,19 +59,25 @@ int builtin_command(char **argv) {
     }
 
     if (!strcmp(argv[0], "fg")) {
-        run_fg(argv);
+        int jobid = read_jobid(argv, STOPPED | BG);
+        if (jobid != -1)
+            fg(jobid);
         return 1;
     }
 
     if (!strcmp(argv[0], "bg")) {
-        run_bg(argv);
+        int jobid = read_jobid(argv, STOPPED);
+        if (jobid != -1)
+            bg(jobid);
         return 1;
     }
 
-    if (!strcmp(argv[0], "exit")) // commande "exit"
-        exit(0);
-    if (!strcmp(argv[0], "quit")) // commande "quitter"
-        exit(0);
+    if (!strcmp(argv[0], "stop")) {
+        int jobid = read_jobid(argv, FG | BG);
+        if (jobid != -1)
+            stop(jobid);
+        return 1;
+    }
 
     return 0;                     // ce n'est pas une commande integree
 }

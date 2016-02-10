@@ -3,7 +3,7 @@
 #include "handlers.h"
 
 // fonctions externes
-void eval(char*cmdline);
+int eval(char*cmdline);
 int parseline(char *buf, char **argv);
 int builtin_command(char **argv);
 
@@ -16,8 +16,16 @@ int main() {
     while (1) {                            // boucle d'interpretation
         printf("<my_shell> ");             // message d'invite
         Fgets(cmdline, MAXLINE, stdin);    // lire commande
-        if (feof(stdin))                   // fin (control-D)
-            exit(0);
-        eval(cmdline);                     // interpreter commande
+        int try_exit = feof(stdin)        // fin (control-D)
+            || !eval(cmdline);             // interpreter commande
+
+        if (try_exit) {
+            int jobid = first_job_for_status(~FREE);
+            if (jobid == -1) {
+                exit(0);
+            }
+
+            printf("Can't exit while there's some jobs left\n");
+        }
     }
 }
