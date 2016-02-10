@@ -33,7 +33,10 @@ myshell.o: myshell.c myshell.h
 jobs.o: jobs.c jobs.h
 	$(CC) $(CFLAGS) -c -o $@ $<	
 
-myshell: myshell.o eval.o parseline.o csapp.o jobs.o
+builtin.o: builtin.c builtin.h
+	$(CC) $(CFLAGS) -c -o $@ $<	
+
+myshell: myshell.o eval.o parseline.o csapp.o jobs.o builtin.o
 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS)
 
 clean:

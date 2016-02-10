@@ -1,13 +1,22 @@
+#include <string.h>
 #include "jobs.h"
 
 Job jobs[MAXJOBS] = {{0}};
 
-int first_free_job() {
+int first_job_for_status(JobStatus status) {
 	int i;
-	for (i=0; i < MAXJOBS && jobs[i].status != FREE; i++);
+	for (i=0; i < MAXJOBS && (jobs[i].status & status); i++);
 	if (i == MAXJOBS) return -1;
 
 	return i;
+}
+
+int first_free_job() {
+	return first_job_for_status(FREE);
+}
+
+int get_fg() {
+	return first_job_for_status(FG);
 }
 
 int add_new_job (pid_t pid, char* cmdline) {
@@ -17,7 +26,7 @@ int add_new_job (pid_t pid, char* cmdline) {
 		jobs[i].cmdline = malloc(cmdline_size * sizeof(char));
 		if (jobs[i].cmdline == NULL) return -1;
 		jobs[i].pid = pid;
-		jobs[i].status = RUNNING;
+		jobs[i].status = BG;
 		memcpy(jobs[i].cmdline, cmdline, cmdline_size);
 	}
 
@@ -32,7 +41,7 @@ int get_job_by_pid (pid_t pid) {
 	return i;
 }
 
-void del_job (int jobid) {
+void free_job (int jobid) {
 	free(jobs[jobid].cmdline);
 	jobs[jobid].status = FREE;
 }
@@ -40,7 +49,7 @@ void del_job (int jobid) {
 void print_jobs() {
 	int i;
 	for (i = 0; i < MAXJOBS; i++) {
-		if (jobs[i].status == STOPPED || jobs[i].status == RUNNING) {
+		if (jobs[i].status == STOPPED || jobs[i].status == BG) {
 			printf("[%d] %s %s",
 					i,
 					jobs[i].status == STOPPED ? "STOPPED" : "RUNNING",
@@ -57,7 +66,7 @@ void handle_done() {
 					i,
 					"DONE",
 					jobs[i].cmdline);
-			del_job(i);
+			free_job(i);
 		}
 	}
 }

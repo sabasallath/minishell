@@ -1,6 +1,7 @@
 /* eval : interprete une ligne de commande passee en parametre       */
 #include "jobs.h"
 #include "myshell.h"
+#include "builtin.h"
 
 // fonctions externes
 int parseline(char *buf, char **argv);
@@ -27,12 +28,8 @@ void eval(char *cmdline)
         }
 
         int jobid = add_new_job(pid, cmdline);
-        if (!bg) { // le pere attend fin du travail de premier plan
-            while (jobs[jobid].status != DONE) {
-                sleep(0);
-            }
-            jobs[jobid].status = FREE;
-        }
+        if (!bg) // le pere attend fin du travail de premier plan
+            fg(jobid);
         else       // travail d'arriere-plan, on imprime le pid
             printf("[%d] %d %s", jobid, pid, cmdline);
     }
@@ -52,6 +49,28 @@ int builtin_command(char **argv)
         print_jobs();
         return 1;
     }
+    if(!strcmp(argv[0], "fg")) {
+        int jobid;
+        if (argv[1] == NULL) {
+            //default
+            jobid = default_fg_jobid();
+            if (jobid == -1) {
+                fprintf(stderr, "No background job");
+                return 1;
+            }
+        }
+        else {
+            jobid = read_jobid(argv[1]);  
+            if (jobid == -1) {
+                fprintf(stderr, "Wrong //%%jobid");
+                return 1;
+            }
+        }
+
+        fg(jobid);
+        return 1;
+    }
+
     if (!strcmp(argv[0], "quit")) // commande "quitter"
         exit(0);
     if (!strcmp(argv[0], "&"))    // ignorer & tout seul
