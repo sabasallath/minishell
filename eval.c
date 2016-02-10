@@ -16,30 +16,32 @@ int eval(char *cmdline) {
     strcpy(buf, cmdline);
     bg = parseline(buf, argv);
 
-    if (!strcmp(argv[0], "exit")) // commande "exit"
-        return 0;
-    if (!strcmp(argv[0], "quit")) // commande "quitter"
-        return 0;
+    if (argv[0] != NULL) {// commande vide
 
-    if (!builtin_command(argv)) {    // commande integree ?
-        // si oui, executee directement
-        if ((pid = Fork()) == 0) {   // si non, executee par un fils
-            setpgid(0, 0);
-            if (execvp(argv[0], argv) < 0) {
-                printf("%s: Command not found.\n", argv[0]);
-                exit(0);
+        if (!strcmp(argv[0], "exit")) // commande "exit"
+            return 0;
+        if (!strcmp(argv[0], "quit")) // commande "quitter"
+            return 0;
+
+        if (!builtin_command(argv)) {    // commande integree ?
+            // si oui, executee directement
+            if ((pid = Fork()) == 0) {   // si non, executee par un fils
+                setpgid(0, 0);
+                if (execvp(argv[0], argv) < 0) {
+                    printf("%s: Command not found.\n", argv[0]);
+                    exit(0);
+                }
             }
-        }
 
-        int jobid = add_new_job(pid, cmdline);
-        if (!bg)
-            fg(jobid);
-        else
-            printf("[%d] %d %s", jobid, pid, cmdline);
+            int jobid = add_new_job(pid, cmdline);
+            if (!bg)
+                fg(jobid);
+            else
+                printf("[%d] %d %s", jobid, pid, cmdline);
+        }
     }
 
     handle_done();
-
     return 1;
 }
 
@@ -47,8 +49,6 @@ int eval(char *cmdline) {
 // l'executer et renvoyer "vrai"
 int builtin_command(char **argv) {
 
-    if (argv[0] == NULL) // commande vide
-        return 1;
     if (!strcmp(argv[0], "&")) // ignorer & tout seul
         return 1;
 
