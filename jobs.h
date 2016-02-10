@@ -10,6 +10,7 @@ typedef enum {
 	FREE = 0,
 	STOPPED,
 	RUNNING,
+	DONE,
 } JobStatus;
 
 typedef struct {
@@ -26,5 +27,7 @@ int add_new_job (pid_t pid, char* cmdline);
 int get_job_by_pid (pid_t pid);
 void del_job (int i);
 void print_jobs();
+void handle_done();
+void handler_sigchld(int sig);
 
 #endif

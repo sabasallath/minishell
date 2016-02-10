@@ -15,12 +15,11 @@ void eval(char *cmdline)
 
     strcpy(buf, cmdline);
     bg = parseline(buf, argv);
-    if (argv[0] == NULL)
-        return;                      // ignorer lignes vides
 
     if (!builtin_command(argv)) {    // commande integree ?
         // si oui, executee directement
         if ((pid = Fork()) == 0) {   // si non, executee par un fils
+            setpgid(0, 0);
             if (execvp(argv[0], argv) < 0) {
                 printf("%s: Command not found.\n", argv[0]);
                 exit(0);
@@ -29,13 +28,17 @@ void eval(char *cmdline)
 
         int jobid = add_new_job(pid, cmdline);
         if (!bg) { // le pere attend fin du travail de premier plan
-            int status;
-            if (waitpid(pid, &status, 0) < 0)
-                unix_error("waitfg: waitpid error");
+            while (jobs[jobid].status != DONE) {
+                sleep(0);
+            }
+            jobs[jobid].status = FREE;
         }
         else       // travail d'arriere-plan, on imprime le pid
             printf("[%d] %d %s", jobid, pid, cmdline);
     }
+
+    handle_done();
+
     return;
 }
 
@@ -43,6 +46,8 @@ void eval(char *cmdline)
 // l'executer et renvoyer "vrai"
 int builtin_command(char **argv)
 {
+    if (argv[0] == NULL) // commande vide
+        return 1;
     if (!strcmp(argv[0], "jobs")) {
         print_jobs();
         return 1;
