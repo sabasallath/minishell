@@ -3,9 +3,9 @@
 
 #include "jobs.h"
 
-int read_jobid (char** argv, JobStatus status);
-void fg (int jobid);
-void bg (int jobid);
-void stop (int jobid);
+jobid_t read_jobid (char** argv, JobStatus status);
+void fg (jobid_t jobid);
+void bg (jobid_t jobid);
+void stop (jobid_t jobid);
 
 #endif

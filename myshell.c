@@ -10,7 +10,7 @@ int builtin_command(char **argv);
 int main() {
     char cmdline[MAXLINE];                 // ligne de commande
 
-    init_jobs();
+    jobs_init();
 	shell_signals();
 
     while (1) {                            // boucle d'interpretation
@@ -20,7 +20,7 @@ int main() {
             || !eval(cmdline);             // interpreter commande
 
         if (try_exit) {
-            int jobid = first_job_for_status(~FREE);
+            jobid_t jobid = jobs_find_first_by_status(~FREE);
             if (jobid == -1) {
                 exit(0);
             }

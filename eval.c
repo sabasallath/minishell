@@ -33,7 +33,7 @@ int eval(char *cmdline) {
                 }
             }
 
-            int jobid = add_new_job(pid, cmdline);
+            jobid_t jobid = jobs_add(pid, cmdline);
             if (!bg)
                 fg(jobid);
             else
@@ -41,7 +41,7 @@ int eval(char *cmdline) {
         }
     }
 
-    handle_done();
+    jobs_handle_done();
     return 1;
 }
 
@@ -54,27 +54,27 @@ int builtin_command(char **argv) {
 
 
     if (!strcmp(argv[0], "jobs")) {
-        print_jobs();
+        jobs_print(STOPPED | BG);
         return 1;
     }
 
     if (!strcmp(argv[0], "fg")) {
-        int jobid = read_jobid(argv, STOPPED | BG);
-        if (jobid != -1)
+        jobid_t jobid = read_jobid(argv, STOPPED | BG);
+        if (jobid != INVALID_JOBID)
             fg(jobid);
         return 1;
     }
 
     if (!strcmp(argv[0], "bg")) {
-        int jobid = read_jobid(argv, STOPPED);
-        if (jobid != -1)
+        jobid_t jobid = read_jobid(argv, STOPPED);
+        if (jobid != INVALID_JOBID)
             bg(jobid);
         return 1;
     }
 
     if (!strcmp(argv[0], "stop")) {
-        int jobid = read_jobid(argv, FG | BG);
-        if (jobid != -1)
+        jobid_t jobid = read_jobid(argv, FG | BG);
+        if (jobid != INVALID_JOBID)
             stop(jobid);
         return 1;
     }

@@ -3,8 +3,6 @@
 
 #include "csapp.h"
 
-#define MAXJOBS 12
-
 typedef enum {
 	FREE    = 1 << 0,
 	STOPPED = 1 << 1,
@@ -13,6 +11,11 @@ typedef enum {
 	DONE    = 1 << 4,
 } JobStatus;
 
+typedef int jobid_t;
+
+// Indique un id de job invalide.
+#define INVALID_JOBID -1
+
 typedef struct {
 	pid_t pid;
 	JobStatus status;
@@ -20,17 +23,45 @@ typedef struct {
 	char* cmdline;
 } Job;
 
+// Nombre maximal de jobs
+#define MAXJOBS 12
+
+// Tableau statique contenant les jobs (libre ou non)
 Job jobs[MAXJOBS];
 
-void init_jobs();
-int first_job_for_status(JobStatus status);
-int first_free_job();
-int get_fg();
-int add_new_job (pid_t pid, char* cmdline);
-int get_job_by_pid (pid_t pid);
-void free_job (int jobid);
-void print_job_status(int pid, char* status);
-void print_jobs();
-void handle_done();
+// Initialise la gestion des jobs
+void jobs_init ();
+
+// Ajoute un nouveau job a la première place libre et retourne son jobid
+// Retourne INVALID_JOBID si le nombre de job maximum a été atteint.
+jobid_t jobs_add (pid_t pid, char* cmdline);
+
+// Retourne le premier jobid correspondant au `status` donné.
+// status peut être une combinaison bit à bit des différents status.
+// Retourne INVALID_JOBID si non trouvé
+jobid_t jobs_find_first_by_status (JobStatus status);
+
+// Retourne le premier jobid correspondant au `pid` donné.
+// Retourne INVALID_JOBID si non enregistré
+jobid_t jobs_find_by_pid (pid_t pid);
+
+// Affiche une ligne de description pour tous les jobs
+// correspondant au masque `status`.
+void jobs_print (JobStatus status);
+
+// Parcours l'ensemble des jobs de status DONE
+// Affiche une ligne de description pour chacun de ces jobs
+// et les libère.
+void jobs_handle_done ();
+
+// Libère le job d'id `jobid`
+void job_free (jobid_t jobid);
+
+// Affiche une ligne de description pour le job d'id `jobid`
+void job_print (jobid_t jobid);
+
+// Affiche une ligne de description pour le job d'id `jobid`
+// et le `status` donné
+void job_print_with_status (jobid_t jobid, char* status);
 
 #endif
