@@ -8,5 +8,6 @@ void fg (jobid_t jobid);
 void bg (jobid_t jobid);
 void interrupt (jobid_t jobid);
 void stop (jobid_t jobid);
+void term (jobid_t jobid);
 
 #endif

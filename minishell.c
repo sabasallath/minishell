@@ -1,8 +1,8 @@
 #include "jobs.h"
 #include "minishell.h"
-#include "handlers.h"
 
 // fonctions externes
+void shell_signals();
 void try_exit();
 void eval(char*cmdline);
 int parseline(char *buf, char **argv);

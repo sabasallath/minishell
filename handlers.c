@@ -1,6 +1,5 @@
 #include "minishell.h"
 #include "jobs.h"
-#include "handlers.h"
 
 void handler_sigint (int sig) {
     jobid_t jobid = jobs_find_first_by_status(FG);

@@ -70,11 +70,16 @@ void bg (jobid_t jobid) {
 
 void interrupt (jobid_t jobid) {
     Kill(jobs[jobid].pid, SIGINT);
-    sleep(1);
+    sleep(1); // On attends un peu pour laisser le temps au job de se terminer
 }
 
 void stop (jobid_t jobid) {
     Kill(jobs[jobid].pid, SIGSTOP);
     jobs[jobid].status = STOPPED;
     job_print_with_status(jobid, "Stopped");
+}
+
+void term (jobid_t jobid) {
+    Kill(jobs[jobid].pid, SIGTERM);
+    sleep(1); // On attends un peu pour laisser le temps au job de se terminer
 }

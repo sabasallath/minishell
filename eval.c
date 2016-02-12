@@ -9,7 +9,7 @@ int builtin_command(char **argv);
 
 void try_exit() {
     jobid_t jobid = jobs_find_first_by_status(~FREE);
-    if (jobid == -1) {
+    if (jobid == INVALID_JOBID) {
         exit(0);
     }
 
@@ -85,6 +85,13 @@ int builtin_command(char **argv) {
         jobid_t jobid = read_jobid(argv, FG | BG);
         if (jobid != INVALID_JOBID)
             interrupt(jobid);
+        return 1;
+    }
+
+    if (!strcmp(argv[0], "term")) {
+        jobid_t jobid = read_jobid(argv, FG | BG);
+        if (jobid != INVALID_JOBID)
+            term(jobid);
         return 1;
     }
 
