@@ -7,40 +7,33 @@
 #.PRECIOUS: %.o
 
 CC = gcc
-CFLAGS = -Wall -Werror -g
-LDFLAGS =
-
+CFLAGS = -Wall -Werror -pedantic -g
+LDFLAGS = -lpthread
 # Note: -lnsl does not seem to work on Mac OS but will
 # probably be necessary on Solaris for linking network-related functions
-#LIBS += -lsocket -lnsl -lrt
-LIBS += -lpthread
+# LDFLAGS += -lsocket -lnsl -lrt
 
+SRC = $(wildcard *.c)
+OBJ = $(patsubst %.c,build/%.o,$(SRC))
+DEP = $(patsubst %.c,build/%.d,$(SRC))
+BIN = myshell
 
-all: myshell
+all: $(BIN)
 
-csapp.o: csapp.c csapp.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+build:
+	@mkdir -p build
 
-parseline.o: parseline.c myshell.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+build/%.d: %.c | build
+	@echo -n '$@ build/' > $@
+	@$(CC) $(CFLAGS) -MM $< >> $@
 
-eval.o: eval.c myshell.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+build/%.o: %.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
 
-myshell.o: myshell.c myshell.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-jobs.o: jobs.c jobs.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-builtin.o: builtin.c builtin.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-handlers.o: handlers.c handlers.h
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-myshell: myshell.o eval.o parseline.o csapp.o jobs.o builtin.o handlers.o
-	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS)
+$(BIN): $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f myshell *.o
+	@rm -f $(BIN) $(DEP) $(OBJ)
+
+-include $(DEP)
