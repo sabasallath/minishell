@@ -37,7 +37,7 @@ void jobs_init ();
 jobid_t jobs_add (pid_t pid, char* cmdline);
 
 // Retourne le premier jobid correspondant au `status` donné.
-// status peut être une combinaison bit à bit des différents status.
+// `status` peut être une combinaison bit à bit des différents status.
 // Retourne INVALID_JOBID si non trouvé
 jobid_t jobs_find_first_by_status (JobStatus status);
 
@@ -56,6 +56,10 @@ void jobs_handle_done ();
 
 // Libère le job d'id `jobid`
 void job_free (jobid_t jobid);
+
+// Indique si le status du job d'id `jobid` correspond à `status`,
+// ce dernier pouvant être un masque combinaison de plusieurs status.
+int job_status_match(jobid_t jobid, JobStatus status);
 
 // Affiche une ligne de description pour le job d'id `jobid`
 void job_print (jobid_t jobid);

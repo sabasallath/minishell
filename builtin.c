@@ -35,11 +35,11 @@ jobid_t read_jobid (char** argv, JobStatus status) {
         fprintf(stderr, "Wrong jobid: %s, expected number between 0 and %d\n", argv[1], MAXJOBS - 1);
         return INVALID_JOBID;
     }
-    if (jobs[jobid].status == FREE) {
+    if (job_status_match(jobid, FREE)) {
         fprintf(stderr, "No such job: %d\n", jobid);
         return INVALID_JOBID;
     }
-    if (!(jobs[jobid].status & status)) {
+    if (!job_status_match(jobid, status)) {
         fprintf(stderr, "You can't do that with this job\n");
         return INVALID_JOBID;
     }
@@ -48,16 +48,16 @@ jobid_t read_jobid (char** argv, JobStatus status) {
 }
 
 void fg (jobid_t jobid) {
-    if (jobs[jobid].status == STOPPED) {
+    if (job_status_match(jobid, STOPPED)) {
         bg(jobid);
     }
 
     jobs[jobid].status = FG;
-    while (jobs[jobid].status == FG) {
+    while (job_status_match(jobid, FG)) {
         sleep(0);
     }
 
-    if (jobs[jobid].status == DONE) {
+    if (job_status_match(jobid, DONE)) {
         job_free(jobid);
     }
 }

@@ -4,7 +4,7 @@
 
 Job jobs[MAXJOBS] = {{0}};
 
-int valid_jobid(jobid_t jobid) {
+int valid_jobid (jobid_t jobid) {
 	if (jobid >= 0 && jobid < MAXJOBS) {
 		return 1;
 	}
@@ -22,27 +22,26 @@ void jobs_init () {
 
 jobid_t jobs_find_first_by_status (JobStatus status) {
 	jobid_t i = 0;
-	while (i < MAXJOBS && !(jobs[i].status & status)) i++;
+	while (i < MAXJOBS && !job_status_match(i, status)) i++;
 	return i == MAXJOBS ? INVALID_JOBID : i;
 }
 
 jobid_t jobs_find_by_pid (pid_t pid) {
 	jobid_t i = 0;
 	while (i < MAXJOBS && jobs[i].pid != pid) i++;
-	return i == MAXJOBS ? INVALID_JOBID : i;
+	return i == MAXJOBS || job_status_match(i, FREE) ? INVALID_JOBID : i;
 }
 
 jobid_t jobs_add (pid_t pid, char* cmdline) {
 	jobid_t jobid = jobs_find_first_by_status(FREE);
 	Job* job = jobs + jobid;
 	if (jobid != INVALID_JOBID) {
-		int cmdline_size = strlen(cmdline) + 1;
-		job->cmdline = malloc(cmdline_size * sizeof(char));
-		if (job->cmdline == NULL) return INVALID_JOBID;
-		memcpy(job->cmdline, cmdline, cmdline_size);
-
 		job->pid = pid;
 		job->status = BG;
+
+		int cmdline_size = strlen(cmdline) + 1;
+		job->cmdline = malloc(cmdline_size * sizeof(char));
+		memcpy(job->cmdline, cmdline, cmdline_size);
 	}
 
 	return jobid;
@@ -51,7 +50,7 @@ jobid_t jobs_add (pid_t pid, char* cmdline) {
 void jobs_print (JobStatus status) {
 	jobid_t i;
 	for (i = 0; i < MAXJOBS; i++) {
-		if (jobs[i].status & status) {
+		if (job_status_match(i, status)) {
 			job_print(i);
 		}
 	}
@@ -60,7 +59,7 @@ void jobs_print (JobStatus status) {
 void jobs_handle_done () {
 	jobid_t i;
 	for (i = 0; i < MAXJOBS; i++) {
-		if (jobs[i].status == DONE) {
+		if (job_status_match(i, DONE)) {
 			job_print(i);
 			job_free(i);
 		}
@@ -72,7 +71,11 @@ void job_free (jobid_t jobid) {
 	jobs[jobid].status = FREE;
 }
 
-char* status_str(jobid_t jobid) {
+int job_status_match (jobid_t jobid, JobStatus status) {
+	return jobs[jobid].status & status;
+}
+
+char* status_str (jobid_t jobid) {
 	switch (jobs[jobid].status) {
 		case FREE: return "Free";
 		case STOPPED: return "Stopped";
