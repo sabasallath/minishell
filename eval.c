@@ -81,6 +81,13 @@ int builtin_command(char **argv) {
         return 1;
     }
 
+    if (!strcmp(argv[0], "int")) {
+        jobid_t jobid = read_jobid(argv, FG | BG);
+        if (jobid != INVALID_JOBID)
+            interrupt(jobid);
+        return 1;
+    }
+
     if (!strcmp(argv[0], "stop")) {
         jobid_t jobid = read_jobid(argv, FG | BG);
         if (jobid != INVALID_JOBID)

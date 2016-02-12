@@ -68,6 +68,11 @@ void bg (jobid_t jobid) {
     job_print_with_status(jobid, "Continued");
 }
 
+void interrupt (jobid_t jobid) {
+    Kill(jobs[jobid].pid, SIGINT);
+    sleep(1);
+}
+
 void stop (jobid_t jobid) {
     Kill(jobs[jobid].pid, SIGSTOP);
     jobs[jobid].status = STOPPED;
