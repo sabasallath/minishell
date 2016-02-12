@@ -1,6 +1,6 @@
 /* eval : interprete une ligne de commande passee en parametre       */
 #include "jobs.h"
-#include "myshell.h"
+#include "minishell.h"
 #include "builtin.h"
 
 // fonctions externes

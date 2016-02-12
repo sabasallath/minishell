@@ -16,7 +16,7 @@ LDFLAGS = -lpthread
 SRC = $(wildcard *.c)
 OBJ = $(patsubst %.c,build/%.o,$(SRC))
 DEP = $(patsubst %.c,build/%.d,$(SRC))
-BIN = myshell
+BIN = minishell
 
 all: $(BIN)
 
