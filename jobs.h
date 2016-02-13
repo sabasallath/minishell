@@ -20,7 +20,7 @@ typedef struct {
 	pid_t pid;
 	JobStatus status;
 	int argc;
-	char* cmdline;
+	char cmdline[MAXLINE];
 } Job;
 
 // Nombre maximal de jobs

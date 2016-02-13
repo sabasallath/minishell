@@ -32,24 +32,21 @@ jobid_t jobs_find_by_pid (pid_t pid) {
 	return i == MAXJOBS || job_status_match(i, FREE) ? INVALID_JOBID : i;
 }
 
-char* cmdline_copy(char* cmdline) {
-	char* copy;
+void cmdline_copy(char* src, char dst[]) {
 	// Ignore les espaces en début de chaîne
-	while (*cmdline == ' ') cmdline++;
+	while (*src == ' ') src++;
 
-	int size = strlen(cmdline);
+	int size = strlen(src);
 
 	int i = size - 1;
 	// On ne veut pas conserver ces caractères en fin de chaîne
-	while (cmdline[i] == '\n' || cmdline[i] == ' ' || cmdline[i] == '&') {
+	while (src[i] == '\n' || src[i] == ' ' || src[i] == '&') {
 		i--;
 	}
 	size = i + 2;
 
-	copy = malloc(size * sizeof(char));
-	memcpy(copy, cmdline, size);
-	copy[size - 1] = '\0';
-	return copy;
+	memcpy(dst, src, size);
+	dst[size - 1] = '\0';
 }
 
 jobid_t jobs_add (pid_t pid, char* cmdline) {
@@ -58,7 +55,7 @@ jobid_t jobs_add (pid_t pid, char* cmdline) {
 	if (jobid != INVALID_JOBID) {
 		job->pid = pid;
 		job->status = BG;
-		job->cmdline = cmdline_copy(cmdline);
+		cmdline_copy(cmdline, job->cmdline);
 	}
 
 	return jobid;
@@ -84,7 +81,6 @@ void jobs_free_done () {
 }
 
 void job_free (jobid_t jobid) {
-	free(jobs[jobid].cmdline);
 	jobs[jobid].status = FREE;
 }
 
