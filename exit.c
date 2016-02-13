@@ -14,7 +14,7 @@ void exit_try () {
         exit_force();
     }
     else {
-        printf("You have running jobs (run again to force exit)\n");
+        printf("You have some jobs left (run again to force exit)\n");
         // Valeur "2" parce qu'on va l'"oublié" une première fois avant la prochaine execution
         exit_next_forced = 2;
     }
@@ -25,6 +25,8 @@ void exit_force () {
     jobid_t i;
     for (i = 0; i < MAXJOBS; i++) {
         if (!(jobs[i].status & (FREE | DONE))) {
+            if (jobs[i].status & STOPPED)
+                Kill(jobs[i].pid, SIGCONT);
             Kill(jobs[i].pid, SIGTERM);
         }
     }
