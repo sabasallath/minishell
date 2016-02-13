@@ -2,19 +2,11 @@
 #include "jobs.h"
 #include "minishell.h"
 #include "builtin.h"
+#include "exit.h"
 
 // fonctions externes
 int parseline(char *buf, char **argv);
 bool builtin_command(char **argv);
-
-void try_exit() {
-    jobid_t jobid = jobs_find_first_by_status(~(FREE | DONE));
-    if (jobid == INVALID_JOBID) {
-        exit(0);
-    }
-
-    printf("Can't exit while there's some jobs left\n");
-}
 
 void exec_command(char** argv) {
     setpgid(0, 0);
@@ -39,12 +31,17 @@ void eval(char *cmdline) {
         }
 
         jobid_t jobid = jobs_add(pid, cmdline);
+        if (jobid == INVALID_JOBID) {
+            printf("Error while trying to register job with pid %d (Maximum number of jobs (%d) reached ?)\n", pid, MAXJOBS);
+        }
+
         if (bg)
             job_print_with_pid(jobid);
         else
             fg_wait(jobid);
     }
 
+    exit_forget_next_forced();
     jobs_free_done();
 }
 
@@ -57,7 +54,7 @@ bool builtin_command(char **argv) {
         return true;
 
     if (!strcmp(argv[0], "exit") || !strcmp(argv[0], "quit")) {
-        try_exit();
+        exit_try();
         return true;
     }
 
