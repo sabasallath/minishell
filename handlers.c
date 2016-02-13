@@ -15,6 +15,7 @@ void handler_sigtstp (int sig) {
         Kill(jobs[jobid].pid, SIGSTOP);
         jobs[jobid].status = STOPPED;
         printf("\n");
+        job_print_with_status(jobid, "Stopped");
     }
 }
 
@@ -26,6 +27,8 @@ void handler_sigchld (int sig) {
         if (jobid == INVALID_JOBID)
             printf("Got a SIGCHLD for child with pid %d, but no corresponding job found\n", pid);
         else
+            // Le status DONE est un statut intermédiaire indiquant qu'il faut
+            // signaler la terminaison du job à l'utilisateur avant de le libérer
             jobs[jobid].status = DONE;
     }
 }

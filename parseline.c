@@ -1,11 +1,10 @@
 /* parseline - analyse ligne de commande, construit tableau argv[] */
 #include "minishell.h"
 
-int parseline(char *buf, char **argv)
-{
+bool parseline(char *buf, char **argv) {
     char *delim;         // pointe vers premier delimiteur espace
     int argc;            // nb d'arguments
-    int bg;              // travail d'arriere-plan ?
+    bool bg;              // travail d'arriere-plan ?
 
     buf[strlen(buf)-1] = ' ';     // remplacer '\n' final par espace
     while (*buf && (*buf == ' ')) // ignorer espaces au debut
@@ -22,7 +21,7 @@ int parseline(char *buf, char **argv)
     argv[argc] = NULL;                     // termine liste d'args
 
     if (argc == 0)                         // ignorer ligne vide
-        return 1;
+        return true;
 
     if ((bg = (*argv[argc-1] == '&')) != 0) // travail d'arriere-plan ?
         argv[--argc] = NULL; // enleve le '&' dans la ligne de commande stockee

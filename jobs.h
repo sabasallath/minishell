@@ -1,7 +1,7 @@
 #ifndef __JOBS_H__
 #define __JOBS_H__
 
-#include "csapp.h"
+#include "minishell.h"
 
 typedef enum {
 	FREE    = 1 << 0,
@@ -52,17 +52,23 @@ void jobs_print (JobStatus status);
 // Parcours l'ensemble des jobs de status DONE
 // Affiche une ligne de description pour chacun de ces jobs
 // et les libère.
-void jobs_handle_done ();
+void jobs_free_done ();
 
 // Libère le job d'id `jobid`
 void job_free (jobid_t jobid);
 
+// Retourne la chaine de caractère correspondant à `status`
+char* job_status_str(jobid_t jobid);
+
 // Indique si le status du job d'id `jobid` correspond à `status`,
 // ce dernier pouvant être un masque combinaison de plusieurs status.
-int job_status_match(jobid_t jobid, JobStatus status);
+bool job_status_match(jobid_t jobid, JobStatus status);
 
 // Affiche une ligne de description pour le job d'id `jobid`
 void job_print (jobid_t jobid);
+
+// Affiche une ligne de description pour le job d'id `jobid` avec son pid
+void job_print_with_pid (jobid_t jobid);
 
 // Affiche une ligne de description pour le job d'id `jobid`
 // et le `status` donné
