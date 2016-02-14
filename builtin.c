@@ -51,27 +51,22 @@ jobid_t read_jobid (char** argv, JobStatus status) {
     return jobid;
 }
 
-void job_change_status(jobid_t jobid, int sig, int wait) {
+void job_change_status(jobid_t jobid, int sig) {
     Kill(jobs[jobid].pid, sig);
 
     // On attends un peu pour laisser le temps au signal d'avoir un effet
-    if (wait > 0) {
-        sleep(wait);
-        while (job_status_match(jobid, UPDATED)) {
-            job_update(jobid, true);
-        }
-    }
-    else {
-        while (!job_status_match(jobid, UPDATED)) {
-            sleep(0);
-        }
+    sleep(1);
+
+    // Certain signaux peuvent avoir été redefini par le processus enfant
+    // et ne pas avoir l'effet par défaut.
+    // Il n'est donc pas envisageable d'attendre indéfiniment. Tant pis.
+    if (job_status_match(jobid, UPDATED))
         job_update(jobid, true);
-    }
 }
 
 void fg (jobid_t jobid) {
     if (job_status_match(jobid, STOPPED))
-        job_change_status(jobid, SIGCONT, 0);
+        job_change_status(jobid, SIGCONT);
     else
         job_print(jobid);
 
@@ -90,17 +85,25 @@ void fg_wait (jobid_t jobid) {
 }
 
 void bg (jobid_t jobid) {
-    job_change_status(jobid, SIGCONT, 0);
+    job_change_status(jobid, SIGCONT);
 }
 
 void interrupt (jobid_t jobid) {
-    job_change_status(jobid, SIGINT, 3);
+    job_change_status(jobid, SIGINT);
 }
 
 void stop (jobid_t jobid) {
-    job_change_status(jobid, SIGSTOP, 0);
+    job_change_status(jobid, SIGSTOP);
 }
 
 void term (jobid_t jobid) {
-    job_change_status(jobid, SIGTERM, 3);
+    job_change_status(jobid, SIGTERM);
+}
+
+void builtin_wait () {
+    jobid_t jobid;
+    while ((jobid = jobs_find_first_by_status(~(FREE | STOPPED))) != INVALID_JOBID) {
+        sleep(0);
+        jobs_update();
+    }
 }

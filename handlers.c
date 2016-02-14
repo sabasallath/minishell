@@ -5,7 +5,7 @@
 void handler_sigint (int sig) {
     jobid_t jobid = jobs_find_first_by_status(FG);
     if (jobid != INVALID_JOBID) {
-        printf("\n");
+        printf("\n"); // Retour a la ligne après le symbole de controle
         interrupt(jobid);
     }
 }
@@ -13,7 +13,7 @@ void handler_sigint (int sig) {
 void handler_sigtstp (int sig) {
     jobid_t jobid = jobs_find_first_by_status(FG);
     if (jobid != INVALID_JOBID) {
-        printf("\n");
+        printf("\n"); // Retour a la ligne après le symbole de controle
         stop(jobid);
     }
 }

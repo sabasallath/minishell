@@ -98,5 +98,10 @@ bool builtin_command(char **argv) {
         return true;
     }
 
+    if (!strcmp(argv[0], "wait")) {
+        builtin_wait();
+        return true;
+    }
+
     return false; // ce n'est pas une commande integree
 }
