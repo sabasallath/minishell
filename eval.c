@@ -1,7 +1,6 @@
 /* eval : interprete une ligne de commande passee en parametre       */
 #include "jobs.h"
 #include "minishell.h"
-#include "builtin.h"
 #include "exit.h"
 
 // fonctions externes
@@ -38,70 +37,9 @@ void eval(char *cmdline) {
         if (bg)
             job_print_with_pid(jobid);
         else
-            fg_wait(jobid);
+            job_fg(jobid);
     }
 
     exit_forget_next_forced();
     jobs_update();
-}
-
-// si le premier parametre est une commande integree,
-// l'executer et renvoyer "vrai"
-bool builtin_command(char **argv) {
-    if (argv[0] == NULL)       // commande vide
-        return true;
-    if (!strcmp(argv[0], "&")) // ignorer & tout seul
-        return true;
-
-    if (!strcmp(argv[0], "exit") || !strcmp(argv[0], "quit")) {
-        exit_try();
-        return true;
-    }
-
-    if (!strcmp(argv[0], "jobs")) {
-        jobs_print(STOPPED | BG);
-        return true;
-    }
-
-    if (!strcmp(argv[0], "fg")) {
-        jobid_t jobid = read_jobid(argv, STOPPED | BG);
-        if (jobid != INVALID_JOBID)
-            fg(jobid);
-        return true;
-    }
-
-    if (!strcmp(argv[0], "bg")) {
-        jobid_t jobid = read_jobid(argv, STOPPED);
-        if (jobid != INVALID_JOBID)
-            bg(jobid);
-        return true;
-    }
-
-    if (!strcmp(argv[0], "int")) {
-        jobid_t jobid = read_jobid(argv, FG | BG);
-        if (jobid != INVALID_JOBID)
-            interrupt(jobid);
-        return true;
-    }
-
-    if (!strcmp(argv[0], "term")) {
-        jobid_t jobid = read_jobid(argv, FG | BG);
-        if (jobid != INVALID_JOBID)
-            term(jobid);
-        return true;
-    }
-
-    if (!strcmp(argv[0], "stop")) {
-        jobid_t jobid = read_jobid(argv, FG | BG);
-        if (jobid != INVALID_JOBID)
-            stop(jobid);
-        return true;
-    }
-
-    if (!strcmp(argv[0], "wait")) {
-        builtin_wait();
-        return true;
-    }
-
-    return false; // ce n'est pas une commande integree
 }

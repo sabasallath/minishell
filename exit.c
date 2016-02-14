@@ -10,8 +10,8 @@ void try_terminate_jobs () {
     for (i = 0; i < MAXJOBS; i++) {
         if (!job_status_match(i, FREE)) {
             if (job_status_match(i, STOPPED))
-                Kill(jobs[i].pid, SIGCONT);
-            Kill(jobs[i].pid, SIGTERM);
+                job_kill(i, SIGCONT);
+            job_kill(i, SIGTERM);
         }
     }
 
@@ -34,7 +34,8 @@ void exit_try () {
     }
     else {
         printf("You have some jobs left (run again to force exit)\n");
-        // Valeur "2" parce qu'on va l'"oublié" une première fois avant la prochaine execution
+        // Valeur "2" parce qu'on va l'"oublié" une première fois
+        // avant la prochaine execution
         exit_next_forced = 2;
     }
 }
@@ -45,5 +46,6 @@ void exit_force () {
 }
 
 void exit_forget_next_forced () {
-    exit_next_forced--;
+    if (exit_next_forced > 0)
+        exit_next_forced--;
 }

@@ -1,5 +1,6 @@
 #include "csapp.h"
-#include "builtin.h"
+#include "jobs.h"
+#include "exit.h"
 
 jobid_t parse_jobid (char* arg) {
     if (*arg == '\0') {
@@ -32,6 +33,12 @@ pid_t parse_pid(char* arg) {
             : pid;
 }
 
+// Essaie de lire l'argument 1 de `argv` en tant que jobid
+// Verifie la correspondance entre le status du job et le masque `status`
+// Si l'argument est vide, choisi un job par défaut en accordance avec `status`
+//
+// Retourne le jobid en question
+// ou INVALID_JOBID si aucun job adéquate n'a été trouvé
 jobid_t read_jobid (char** argv, JobStatus status) {
     if (argv[1] == NULL) { // Pas d'argument spécifié pour la commande
         // Cherche un jobid par défaut.
@@ -46,6 +53,7 @@ jobid_t read_jobid (char** argv, JobStatus status) {
 
     jobid_t jobid;
     if (argv[1][0] == '%') {
+        // L'argument est un id de job
         jobid = parse_jobid(argv[1] + 1);
         if (jobid == INVALID_JOBID) {
             fprintf(stderr, "Wrong jobid `%s`, expected number between 1 and %d\n",
@@ -59,6 +67,7 @@ jobid_t read_jobid (char** argv, JobStatus status) {
         }
     }
     else {
+        // L'argument est un id de processus
         pid_t pid = parse_pid(argv[1]);
         if (pid == 0) {
             fprintf(stderr, "Invalid pid `%s`\n", argv[1]);
@@ -66,7 +75,6 @@ jobid_t read_jobid (char** argv, JobStatus status) {
         }
 
         jobid = jobs_find_by_pid(pid);
-
         if (jobid == INVALID_JOBID) {
             fprintf(stderr, "No job found for pid `%d`\n", pid);
             return INVALID_JOBID;
@@ -82,53 +90,45 @@ jobid_t read_jobid (char** argv, JobStatus status) {
     return jobid;
 }
 
-void job_change_status(jobid_t jobid, int sig) {
-    Kill(jobs[jobid].pid, sig);
-
-    // On attends un peu pour laisser le temps au signal d'avoir un effet
-    sleep(1);
-
-    // Certain signaux peuvent avoir été redefini par le processus enfant
-    // et ne pas avoir l'effet par défaut.
-    // Il n'est donc pas envisageable d'attendre indéfiniment. Tant pis.
-    if (job_status_match(jobid, UPDATED))
-        job_update(jobid, true);
+void builtin_jobs () {
+    jobs_print(STOPPED | RUNNING);
 }
 
-void fg (jobid_t jobid) {
+void builtin_fg (char** argv) {
+    jobid_t jobid = read_jobid(argv, STOPPED | RUNNING);
+    if (jobid == INVALID_JOBID)
+        return;
+
     if (job_status_match(jobid, STOPPED))
         job_change_status(jobid, SIGCONT);
     else
         job_print(jobid);
 
-    fg_wait(jobid);
+    job_fg(jobid);
 }
 
-void fg_wait (jobid_t jobid) {
-    jobs[jobid].status = FG;
-    while (job_status_match(jobid, FG)) {
-        sleep(0);
-    }
-
-    if (job_status_match(jobid, UPDATED)) {
-        job_update(jobid, false);
-    }
+void builtin_bg (char** argv) {
+    jobid_t jobid = read_jobid(argv, STOPPED);
+    if (jobid != INVALID_JOBID)
+        job_change_status(jobid, SIGCONT);
 }
 
-void bg (jobid_t jobid) {
-    job_change_status(jobid, SIGCONT);
+void builtin_int (char** argv) {
+    jobid_t jobid = read_jobid(argv, RUNNING);
+    if (jobid != INVALID_JOBID)
+        job_change_status(jobid, SIGINT);
 }
 
-void interrupt (jobid_t jobid) {
-    job_change_status(jobid, SIGINT);
+void builtin_stop (char** argv) {
+    jobid_t jobid = read_jobid(argv, RUNNING);
+    if (jobid != INVALID_JOBID)
+        job_change_status(jobid, SIGSTOP);
 }
 
-void stop (jobid_t jobid) {
-    job_change_status(jobid, SIGSTOP);
-}
-
-void term (jobid_t jobid) {
-    job_change_status(jobid, SIGTERM);
+void builtin_term (char** argv) {
+    jobid_t jobid = read_jobid(argv, RUNNING);
+    if (jobid != INVALID_JOBID)
+        job_change_status(jobid, SIGTERM);
 }
 
 void builtin_wait () {
@@ -137,4 +137,27 @@ void builtin_wait () {
         sleep(0);
         jobs_update();
     }
+}
+
+#define builtin(name, exec) if (!strcmp(argv[0], name)) { exec; return 1; }
+// si le premier parametre est une commande integree,
+// l'executer et renvoyer "vrai"
+bool builtin_command(char **argv) {
+    if (argv[0] == NULL)       // commande vide
+        return true;
+    if (!strcmp(argv[0], "&")) // ignorer & tout seul
+        return true;
+
+    builtin("exit", exit_try());
+    builtin("quit", exit_try());
+
+    builtin("jobs", builtin_jobs());
+    builtin("fg",   builtin_fg(argv));
+    builtin("bg",   builtin_bg(argv));
+    builtin("int",  builtin_int(argv));
+    builtin("term", builtin_term(argv));
+    builtin("stop", builtin_stop(argv));
+    builtin("wait", builtin_wait());
+
+    return false; // ce n'est pas une commande integree
 }
