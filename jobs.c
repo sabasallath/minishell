@@ -80,6 +80,8 @@ void jobs_update () {
 }
 
 void job_update(jobid_t jobid, bool print_ifexited) {
+	if (!valid_jobid(jobid)) return;
+
 	int status = jobs[jobid].updated_status;
 	if (WIFEXITED(status)) {
 		jobs[jobid].status = FREE;
@@ -100,6 +102,8 @@ void job_update(jobid_t jobid, bool print_ifexited) {
 }
 
 char* job_status_str (jobid_t jobid) {
+	if (!valid_jobid(jobid)) return "Invalid";
+
 	switch (jobs[jobid].status) {
 		case FREE: return "Free";
 		case STOPPED: return "Stopped";
@@ -111,6 +115,7 @@ char* job_status_str (jobid_t jobid) {
 }
 
 bool job_status_match (jobid_t jobid, JobStatus status) {
+	if (!valid_jobid(jobid)) return false;
 	return jobs[jobid].status & status;
 }
 
