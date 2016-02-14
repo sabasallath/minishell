@@ -70,18 +70,33 @@ void jobs_print (JobStatus status) {
 	}
 }
 
-void jobs_free_done () {
+void jobs_update () {
 	jobid_t i;
 	for (i = 0; i < MAXJOBS; i++) {
-		if (job_status_match(i, DONE)) {
-			job_print(i);
-			job_free(i);
+		if (job_status_match(i, UPDATED)) {
+			job_update(i, true);
 		}
 	}
 }
 
-void job_free (jobid_t jobid) {
-	jobs[jobid].status = FREE;
+void job_update(jobid_t jobid, bool print_ifexited) {
+	int status = jobs[jobid].updated_status;
+	if (WIFEXITED(status)) {
+		jobs[jobid].status = FREE;
+		if (print_ifexited) job_print_with_status(jobid, "Done");
+	}
+	else if (WIFSIGNALED(status)) {
+		jobs[jobid].status = FREE;
+		job_print_with_status(jobid, strsignal(WTERMSIG(status)));
+	}
+	else if (WIFSTOPPED(status)) {
+		jobs[jobid].status = STOPPED;
+		job_print_with_status(jobid, "Stopped");
+	}
+	else if (WIFCONTINUED(status)) {
+		jobs[jobid].status = BG;
+		job_print_with_status(jobid, "Continued");
+	}
 }
 
 char* job_status_str (jobid_t jobid) {
@@ -89,7 +104,7 @@ char* job_status_str (jobid_t jobid) {
 		case FREE: return "Free";
 		case STOPPED: return "Stopped";
 		case FG: case BG: return "Running";
-		case DONE: return "Done";
+		case UPDATED: return "Updated";
 	}
 
 	return "Unkown";

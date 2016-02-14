@@ -42,7 +42,7 @@ void eval(char *cmdline) {
     }
 
     exit_forget_next_forced();
-    jobs_free_done();
+    jobs_update();
 }
 
 // si le premier parametre est une commande integree,

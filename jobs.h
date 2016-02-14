@@ -8,7 +8,7 @@ typedef enum {
 	STOPPED = 1 << 1,
 	FG      = 1 << 2,
 	BG      = 1 << 3,
-	DONE    = 1 << 4,
+	UPDATED = 1 << 4,
 } JobStatus;
 
 typedef int jobid_t;
@@ -21,6 +21,7 @@ typedef struct {
 	JobStatus status;
 	int argc;
 	char cmdline[MAXLINE];
+    int updated_status;
 } Job;
 
 // Nombre maximal de jobs
@@ -49,13 +50,12 @@ jobid_t jobs_find_by_pid (pid_t pid);
 // correspondant au masque `status`.
 void jobs_print (JobStatus status);
 
-// Parcours l'ensemble des jobs de status DONE
-// Affiche une ligne de description pour chacun de ces jobs
-// et les libère.
-void jobs_free_done ();
+// Parcours l'ensemble des jobs de status UPDATED
+void jobs_update ();
 
-// Libère le job d'id `jobid`
-void job_free (jobid_t jobid);
+// Réalise la mise à jour pour le job d'id `jobid`.
+// et a une ligne de description.
+void job_update (jobid_t jobid, bool print_ifexited);
 
 // Retourne la chaine de caractère correspondant à `status`
 char* job_status_str(jobid_t jobid);

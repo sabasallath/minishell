@@ -65,12 +65,12 @@ void fg_wait (jobid_t jobid) {
         sleep(0);
     }
 
-    if (job_status_match(jobid, DONE)) {
+    if (job_status_match(jobid, UPDATED)) {
         // On libère directement le job pour eviter de
         // print le job en tant que Done.
         // Rendre la main à l'utilisateur est suffisant
         // pour le lui signaler.
-        job_free(jobid);
+        job_update(jobid, false);
     }
 }
 
