@@ -20,6 +20,18 @@ jobid_t parse_jobid (char* arg) {
     return jobid - 1;
 }
 
+pid_t parse_pid(char* arg) {
+    if (*arg == '\0') {
+        return 0;
+    }
+
+    char* end = arg;
+    pid_t pid = strtol(arg, &end, 10);
+    return *end != '\0'
+            ? 0 // L'argument ne contient pas que des digits
+            : pid;
+}
+
 jobid_t read_jobid (char** argv, JobStatus status) {
     if (argv[1] == NULL) { // Pas d'argument spécifié pour la commande
         // Cherche un jobid par défaut.
@@ -32,16 +44,35 @@ jobid_t read_jobid (char** argv, JobStatus status) {
         return jobid;
     }
 
-    jobid_t jobid = parse_jobid(argv[1]);
-    if (jobid == INVALID_JOBID) {
-        fprintf(stderr, "Wrong jobid `%s`, expected number between 1 and %d\n",
-                argv[1], MAXJOBS);
-        return INVALID_JOBID;
+    jobid_t jobid;
+    if (argv[1][0] == '%') {
+        jobid = parse_jobid(argv[1] + 1);
+        if (jobid == INVALID_JOBID) {
+            fprintf(stderr, "Wrong jobid `%s`, expected number between 1 and %d\n",
+                    argv[1] + 1, MAXJOBS);
+            return INVALID_JOBID;
+        }
+
+        if (job_status_match(jobid, FREE)) {
+            fprintf(stderr, "No job with id `%d`\n", jobid + 1);
+            return INVALID_JOBID;
+        }
     }
-    if (job_status_match(jobid, FREE)) {
-        fprintf(stderr, "No job with id `%d`\n", jobid);
-        return INVALID_JOBID;
+    else {
+        pid_t pid = parse_pid(argv[1]);
+        if (pid == 0) {
+            fprintf(stderr, "Invalid pid `%s`\n", argv[1]);
+            return INVALID_JOBID;
+        }
+
+        jobid = jobs_find_by_pid(pid);
+
+        if (jobid == INVALID_JOBID) {
+            fprintf(stderr, "No job found for pid `%d`\n", pid);
+            return INVALID_JOBID;
+        }
     }
+
     if (!job_status_match(jobid, status)) {
         fprintf(stderr, "Can't use command `%s` for job with status `%s`\n",
                 argv[0], job_status_str(jobid));
