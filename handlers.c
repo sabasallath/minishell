@@ -1,20 +1,20 @@
 #include "minishell.h"
+#include "builtin.h"
 #include "jobs.h"
 
 void handler_sigint (int sig) {
     jobid_t jobid = jobs_find_first_by_status(FG);
     if (jobid != INVALID_JOBID) {
-        Kill(jobs[jobid].pid, SIGINT);
         printf("\n");
+        interrupt(jobid);
     }
 }
 
 void handler_sigtstp (int sig) {
     jobid_t jobid = jobs_find_first_by_status(FG);
     if (jobid != INVALID_JOBID) {
-        Kill(jobs[jobid].pid, SIGSTOP);
-        jobs[jobid].status = STOPPED;
         printf("\n");
+        stop(jobid);
     }
 }
 

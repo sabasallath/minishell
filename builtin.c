@@ -51,11 +51,30 @@ jobid_t read_jobid (char** argv, JobStatus status) {
     return jobid;
 }
 
+void job_change_status(jobid_t jobid, int sig, int wait) {
+    Kill(jobs[jobid].pid, sig);
+
+    // On attends un peu pour laisser le temps au signal d'avoir un effet
+    if (wait > 0) {
+        sleep(wait);
+        while (job_status_match(jobid, UPDATED)) {
+            job_update(jobid, true);
+        }
+    }
+    else {
+        while (!job_status_match(jobid, UPDATED)) {
+            sleep(0);
+        }
+        job_update(jobid, true);
+    }
+}
+
 void fg (jobid_t jobid) {
     if (job_status_match(jobid, STOPPED))
-        bg(jobid);
+        job_change_status(jobid, SIGCONT, 0);
     else
         job_print(jobid);
+
     fg_wait(jobid);
 }
 
@@ -66,38 +85,22 @@ void fg_wait (jobid_t jobid) {
     }
 
     if (job_status_match(jobid, UPDATED)) {
-        // On libère directement le job pour eviter de
-        // print le job en tant que Done.
-        // Rendre la main à l'utilisateur est suffisant
-        // pour le lui signaler.
         job_update(jobid, false);
     }
 }
 
 void bg (jobid_t jobid) {
-    Kill(jobs[jobid].pid, SIGCONT);
-    jobs[jobid].status = BG;
-    job_print_with_status(jobid, "Continued");
+    job_change_status(jobid, SIGCONT, 0);
 }
 
 void interrupt (jobid_t jobid) {
-    Kill(jobs[jobid].pid, SIGINT);
-    // On attends un peu pour laisser le temps au job de se terminer
-    sleep(1);
-    // Si le signal cause la terminaison, un message sera affiché
-    // automatiquement grâce au handler de SIGCHLD
+    job_change_status(jobid, SIGINT, 3);
 }
 
 void stop (jobid_t jobid) {
-    Kill(jobs[jobid].pid, SIGSTOP);
-    jobs[jobid].status = STOPPED;
-    job_print_with_status(jobid, "Stopped");
+    job_change_status(jobid, SIGSTOP, 0);
 }
 
 void term (jobid_t jobid) {
-    Kill(jobs[jobid].pid, SIGTERM);
-    // On attends un peu pour laisser le temps au job de se terminer
-    sleep(1);
-    // Si le signal cause la terminaison, un message sera affiché
-    // automatiquement grâce au handler de SIGCHLD
+    job_change_status(jobid, SIGTERM, 3);
 }
