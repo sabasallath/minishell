@@ -7,7 +7,7 @@
 #.PRECIOUS: %.o
 
 CC = gcc
-CFLAGS = -Wall -Werror -pedantic -g -std=c99
+CFLAGS = -Wall -Werror -pedantic -g
 LDFLAGS = -lpthread
 # Note: -lnsl does not seem to work on Mac OS but will
 # probably be necessary on Solaris for linking network-related functions

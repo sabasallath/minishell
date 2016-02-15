@@ -117,4 +117,8 @@ void job_print_with_pid (jobid_t jobid);
 // et le `status` donné
 void job_print_with_status (jobid_t jobid, char* status);
 
+// Securise l'accès aux fonctions
+void interrupt_lock();
+void interrupt_unlock();
+
 #endif

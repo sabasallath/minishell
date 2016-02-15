@@ -17,6 +17,30 @@ typedef struct {
 
 Job jobs[MAXJOBS] = {{0}};
 
+typedef struct {
+	sigset_t current;
+	sigset_t saved;
+} Sigmask;
+
+Sigmask sigmask;
+
+/////////////////////////////////////////////////////
+// Securisation des operations sur les jobs
+/////////////////////////////////////////////////////
+
+void interrupt_lock() {
+    sigemptyset(&sigmask.current);
+    sigemptyset(&sigmask.saved);
+    sigaddset(&sigmask.current, SIGCHLD);
+    sigaddset(&sigmask.current, SIGINT);
+    sigaddset(&sigmask.current, SIGTSTP);
+    sigprocmask(SIG_BLOCK, &sigmask.current, &sigmask.saved);
+}
+
+void interrupt_unlock() { 
+    sigprocmask(SIG_SETMASK, &sigmask.saved, NULL);
+}
+
 /////////////////////////////////////////////////////
 // Fonctions utilitaires privées
 /////////////////////////////////////////////////////
