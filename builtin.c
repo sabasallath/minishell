@@ -139,13 +139,13 @@ void builtin_wait () {
     }
 }
 
-#define builtin(name, exec) if (!strcmp(argv[0], name)) { exec; return 1; }
+#define builtin(name, exec) if (strcmp(argv[0], name) == 0) { exec; return true; }
 // si le premier parametre est une commande integree,
 // l'executer et renvoyer "vrai"
 bool builtin_command(char **argv) {
     if (argv[0] == NULL)       // commande vide
         return true;
-    if (!strcmp(argv[0], "&")) // ignorer & tout seul
+    if (strcmp(argv[0], "&") == 0) // ignorer & tout seul
         return true;
 
     builtin("exit", exit_try());
