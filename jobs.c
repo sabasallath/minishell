@@ -67,6 +67,8 @@ void job_kill(jobid_t jobid, int sig) {
 }
 
 void job_change_status(jobid_t jobid, int sig) {
+	if (job_status_match(jobid, STOPPED) && sig != SIGCONT)
+		job_kill(jobid, SIGCONT);
     job_kill(jobid, sig);
 
     // On attends un peu pour laisser le temps au signal d'avoir un effet

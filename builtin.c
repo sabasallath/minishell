@@ -114,7 +114,7 @@ void builtin_bg (char** argv) {
 }
 
 void builtin_int (char** argv) {
-    jobid_t jobid = read_jobid(argv, RUNNING);
+    jobid_t jobid = read_jobid(argv, STOPPED | RUNNING);
     if (jobid != INVALID_JOBID)
         job_change_status(jobid, SIGINT);
 }
@@ -126,7 +126,7 @@ void builtin_stop (char** argv) {
 }
 
 void builtin_term (char** argv) {
-    jobid_t jobid = read_jobid(argv, RUNNING);
+    jobid_t jobid = read_jobid(argv, STOPPED | RUNNING);
     if (jobid != INVALID_JOBID)
         job_change_status(jobid, SIGTERM);
 }
