@@ -1,5 +1,6 @@
 /* parseline - analyse ligne de commande, construit tableau argv[] */
 #include "minishell.h"
+#include "jobs.h"
 
 bool parseline(char *buf, char **argv) {
     char *delim;         // pointe vers premier delimiteur espace
@@ -27,4 +28,34 @@ bool parseline(char *buf, char **argv) {
         argv[--argc] = NULL; // enleve le '&' dans la ligne de commande stockee
 
     return bg;               // 1 si travail d'arriere-plan, 0 sinon
+}
+
+// Defini dans builtin.c
+jobid_t parse_jobid (char* arg);
+
+pid_t read_job_pid(char* buf) {
+    jobid_t jobid = parse_jobid(buf);
+    return jobid == INVALID_JOBID
+            ? 0
+            : job_pid(jobid);
+}
+
+void replace_kill_jobs (char* buf, char** argv) {
+    if (strcmp(argv[0], "kill") != 0) return;
+
+    int i;
+    for (i = 1; argv[i] != NULL; i++) {
+        if (argv[i][0] == '%') {
+            pid_t pid = read_job_pid(argv[i] + 1);
+            if (pid == 0) {
+                printf("Invalid jobid `%s`\n", argv[i] + 1);
+                argv[0] = NULL;
+                return;
+            }
+
+            sprintf(buf, "%d", pid);
+            argv[i] = buf;
+            buf = strchr(buf, '\0') + 1;
+        }
+    }
 }

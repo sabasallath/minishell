@@ -149,6 +149,13 @@ void job_update(jobid_t jobid) {
 // Fonctions utilitaires pour manipuler les jobs
 /////////////////////////////////////////////////////
 
+pid_t job_pid(jobid_t jobid) {
+	if (!valid_jobid(jobid)) return 0;
+	return job_status_match(jobid, FREE)
+			? 0
+			: jobs[jobid].pid;
+}
+
 jobid_t jobs_find_first_by_status (JobStatus status) {
 	jobid_t i = 0;
 	while (i < MAXJOBS && !job_status_match(i, status)) i++;

@@ -83,6 +83,9 @@ void job_update (jobid_t jobid);
 // Fonctions utilitaires pour manipuler les jobs
 /////////////////////////////////////////////////////
 
+// Retourne le pid du job d'id `jobid`
+pid_t job_pid(jobid_t jobid);
+
 // Retourne le premier jobid correspondant au `status` donné.
 // `status` peut être une combinaison bit à bit des différents status.
 // Retourne INVALID_JOBID si non trouvé

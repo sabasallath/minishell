@@ -22,6 +22,7 @@
 // fonctions externes
 int parseline(char *buf, char **argv);
 bool builtin_command(char **argv);
+void replace_kill_jobs (char* buf, char** argv);
 
 void exec_command(char** argv) {
     setpgid(0, 0);
@@ -32,13 +33,17 @@ void exec_command(char** argv) {
 }
 
 void eval(char *cmdline) {
-    char *argv[MAXARGS]; // argv pour execve()
-    char buf[MAXLINE];   // contient ligne commande modifiee
+    char *argv[MAXARGS];    // argv pour execve()
+    char buf[MAXLINE];      // contient ligne commande modifiee
+    char buf2[MAXLINE];     // pour les substitutions de jobid
+                            // par pid pour la commande kill
 
     strcpy(buf, cmdline);
     bool bg = parseline(buf, argv);
 
     if (!builtin_command(argv)) {
+        replace_kill_jobs(buf2, argv);
+
         int pid;
         if ((pid = Fork()) == 0) {
             exec_command(argv);
