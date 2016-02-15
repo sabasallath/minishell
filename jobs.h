@@ -3,6 +3,10 @@
 
 #include "minishell.h"
 
+/////////////////////////////////////////////////////
+// Types et constantes
+/////////////////////////////////////////////////////
+
 // Indique un id de job invalide.
 #define INVALID_JOBID -1
 
@@ -58,7 +62,7 @@ void job_kill(jobid_t jobid, int sig);
 void job_change_status(jobid_t jobid, int sig);
 
 // Passe le job d'id `jobid` en premier plan
-void job_fg(jobid_t jobid);
+void job_fg_wait(jobid_t jobid);
 
 // Permet d'indiquer que le status du job `jobid`
 // a changé. `update_status` correspond au résultat
@@ -88,13 +92,13 @@ jobid_t jobs_find_first_by_status (JobStatus status);
 // Retourne INVALID_JOBID si non enregistré (ou libéré depuis)
 jobid_t jobs_find_by_pid (pid_t pid);
 
-// Affiche une ligne de description pour tous les jobs
-// correspondant au masque `status`.
-void jobs_print (JobStatus status);
-
 // Indique si le status du job d'id `jobid` correspond à `status`,
 // ce dernier pouvant être un masque combinaison de plusieurs status.
 bool job_status_match(jobid_t jobid, JobStatus status);
+
+// Affiche une ligne de description pour tous les jobs
+// correspondant au masque `status`.
+void jobs_print (JobStatus status);
 
 // Retourne la chaine de caractère correspondant au
 // status du job d'id `jobid`

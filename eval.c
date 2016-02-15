@@ -37,7 +37,7 @@ void eval(char *cmdline) {
         if (bg)
             job_print_with_pid(jobid);
         else
-            job_fg(jobid);
+            job_fg_wait(jobid);
     }
 
     exit_forget_next_forced();

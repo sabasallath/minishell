@@ -104,7 +104,7 @@ void builtin_fg (char** argv) {
     else
         job_print(jobid);
 
-    job_fg(jobid);
+    job_fg_wait(jobid);
 }
 
 void builtin_bg (char** argv) {

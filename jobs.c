@@ -2,6 +2,10 @@
 #include <string.h>
 #include "jobs.h"
 
+/////////////////////////////////////////////////////
+// Type et constantes
+/////////////////////////////////////////////////////
+
 typedef struct {
     pid_t pid;
     JobStatus status;
@@ -11,6 +15,10 @@ typedef struct {
 } Job;
 
 Job jobs[MAXJOBS] = {{0}};
+
+/////////////////////////////////////////////////////
+// Fonctions utilitaires privées
+/////////////////////////////////////////////////////
 
 // Verifie que le jobid est dans l'interval attendu
 bool valid_jobid (jobid_t jobid) {
@@ -81,7 +89,8 @@ void job_change_status(jobid_t jobid, int sig) {
         job_update(jobid);
 }
 
-void job_fg(jobid_t jobid) {
+void job_fg_wait(jobid_t jobid) {
+	if (!valid_jobid(jobid)) return;
 	if (!job_status_match(jobid, RUNNING)) return;
 
 	jobs[jobid].status |= FG;
@@ -93,6 +102,8 @@ void job_fg(jobid_t jobid) {
 }
 
 void job_updated(jobid_t jobid, int updated_status) {
+	if (!valid_jobid(jobid)) return;
+
 	jobs[jobid].status &= FG;
 	jobs[jobid].status |= UPDATED;
 	jobs[jobid].updated_status = updated_status;
@@ -131,6 +142,10 @@ void job_update(jobid_t jobid) {
 	}
 }
 
+/////////////////////////////////////////////////////
+// Fonctions utilitaires pour manipuler les jobs
+/////////////////////////////////////////////////////
+
 jobid_t jobs_find_first_by_status (JobStatus status) {
 	jobid_t i = 0;
 	while (i < MAXJOBS && !job_status_match(i, status)) i++;
@@ -141,6 +156,11 @@ jobid_t jobs_find_by_pid (pid_t pid) {
 	jobid_t i = 0;
 	while (i < MAXJOBS && jobs[i].pid != pid) i++;
 	return i == MAXJOBS || job_status_match(i, FREE) ? INVALID_JOBID : i;
+}
+
+bool job_status_match (jobid_t jobid, JobStatus status) {
+	if (!valid_jobid(jobid)) return false;
+	return jobs[jobid].status & status;
 }
 
 void jobs_print (JobStatus status) {
@@ -161,11 +181,6 @@ char* job_status_str (jobid_t jobid) {
 	if (job_status_match(jobid, UPDATED)) return "Updated";
 
 	return "Unkown";
-}
-
-bool job_status_match (jobid_t jobid, JobStatus status) {
-	if (!valid_jobid(jobid)) return false;
-	return jobs[jobid].status & status;
 }
 
 void job_print (jobid_t jobid) {
