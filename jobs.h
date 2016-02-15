@@ -39,7 +39,7 @@ typedef enum {
     // attente de traitement
 	UPDATED     = 1 << 4,
     // Le job est en premier plan
-    FG          = 1 << 5,
+    FG          = 1 << 5
 } JobStatus;
 
 /////////////////////////////////////////////////////

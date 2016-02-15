@@ -1,5 +1,7 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 #include "jobs.h"
 
 /////////////////////////////////////////////////////
@@ -184,16 +186,16 @@ char* job_status_str (jobid_t jobid) {
 }
 
 void job_print (jobid_t jobid) {
-	if (!valid_jobid(jobid)) return;
-	job_print_with_status(jobid, job_status_str(jobid));
+	if (valid_jobid(jobid))
+		job_print_with_status(jobid, job_status_str(jobid));
 }
 
 void job_print_with_pid (jobid_t jobid) {
-	if (!valid_jobid(jobid)) return;
-	printf("[%d] %d `%s`\n", jobid + 1, jobs[jobid].pid, jobs[jobid].cmdline);
+	if (valid_jobid(jobid))
+		printf("[%d] %d `%s`\n", jobid + 1, jobs[jobid].pid, jobs[jobid].cmdline);
 }
 
 void job_print_with_status (jobid_t jobid, char* status) {
-	if (!valid_jobid(jobid)) return;
-	printf("[%d] %s `%s`\n", jobid + 1, status, jobs[jobid].cmdline);
+	if (valid_jobid(jobid))
+		printf("[%d] %s `%s`\n", jobid + 1, status, jobs[jobid].cmdline);
 }

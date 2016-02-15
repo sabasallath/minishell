@@ -7,7 +7,7 @@
 #.PRECIOUS: %.o
 
 CC = gcc
-CFLAGS = -Wall -Werror -pedantic -g
+CFLAGS = -Wall -Werror -pedantic -g -std=c99
 LDFLAGS = -lpthread
 # Note: -lnsl does not seem to work on Mac OS but will
 # probably be necessary on Solaris for linking network-related functions
@@ -26,6 +26,9 @@ build:
 build/%.d: %.c | build
 	@echo -n '$@ build/' > $@
 	@$(CC) $(CFLAGS) -MM $< >> $@
+
+build/csapp.o: csapp.c | build
+	$(CC) -c $< -o $@
 
 build/%.o: %.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
