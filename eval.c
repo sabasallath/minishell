@@ -1,7 +1,23 @@
 /* eval : interprete une ligne de commande passee en parametre       */
+#include <signal.h>
 #include "jobs.h"
 #include "minishell.h"
 #include "exit.h"
+
+#define Lock_jobs()                                 \
+    sigset_t mask;                                  \
+    sigset_t saved_mask;                            \
+    do {                                            \
+    sigemptyset(&mask);                             \
+    sigaddset(&mask, SIGCHLD);                      \
+    sigaddset(&mask, SIGINT);                       \
+    sigaddset(&mask, SIGTSTP);                      \
+    sigprocmask(SIG_SETMASK, &mask, &saved_mask);   \
+} while (0)
+
+#define Unlock_jobs() do {                          \
+    sigprocmask(SIG_UNBLOCK, &saved_mask, NULL);    \
+} while (0)
 
 // fonctions externes
 int parseline(char *buf, char **argv);
@@ -29,7 +45,9 @@ void eval(char *cmdline) {
             // Ne retourne jamais
         }
 
+        Lock_jobs();
         jobid_t jobid = jobs_add(pid, cmdline);
+        Unlock_jobs();
         if (jobid == INVALID_JOBID) {
             printf("Error while trying to register job with pid %d (Maximum number of jobs (%d) reached ?)\n", pid, MAXJOBS);
         }
@@ -42,4 +60,5 @@ void eval(char *cmdline) {
 
     exit_forget_next_forced();
     jobs_update();
+    //unprotected
 }
