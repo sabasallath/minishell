@@ -4,11 +4,10 @@
 #include "minishell.h"
 #include "exit.h"
 #include "signals.h"
+#include "parseline.h"
 
 // fonctions externes
-int parseline(char *buf, char **argv);
 bool builtin_command(char **argv);
-void replace_kill_jobs (char* buf, char** argv);
 
 void exec_command(char** argv) {
     setpgid(0, 0);

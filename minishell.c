@@ -4,10 +4,7 @@
 #include "signals.h"
 
 // fonctions externes
-void force_exit();
 void eval(char*cmdline);
-int parseline(char *buf, char **argv);
-int builtin_command(char **argv);
 
 int main() {
     char cmdline[MAXLINE];                 // ligne de commande
