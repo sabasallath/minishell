@@ -117,7 +117,16 @@ void job_print_with_pid (jobid_t jobid);
 // et le `status` donné
 void job_print_with_status (jobid_t jobid, char* status);
 
-// Securise l'accès aux fonctions
+/////////////////////////////////////////////////////
+// Securisation des operations sur les jobs
+/////////////////////////////////////////////////////
+
+typedef struct {
+    sigset_t current;
+    sigset_t saved;
+} Sigmask;
+
+// Securise l'accès aux fonctions de mise à jour des jobs
 void interrupt_lock();
 void interrupt_unlock();
 

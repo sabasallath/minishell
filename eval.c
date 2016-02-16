@@ -22,17 +22,18 @@ void eval(char *cmdline) {
     char buf[MAXLINE];      // contient ligne commande modifiee
     char buf2[MAXLINE];     // pour les substitutions de jobid
                             // par pid pour la commande kill
+    Sigmask sigmask;
 
     strcpy(buf, cmdline);
     bool bg = parseline(buf, argv);
 
     if (!builtin_command(argv)) {
-        interrupt_lock();
+        interrupt_lock(sigmask);
         replace_kill_jobs(buf2, argv);
 
         int pid;
         if ((pid = Fork()) == 0) {
-            interrupt_unlock();
+            interrupt_unlock(sigmask);
             exec_command(argv); // Ne retourne jamais
         }
 
@@ -45,14 +46,14 @@ void eval(char *cmdline) {
              job_print_with_pid(jobid);
         }
         else {
-            interrupt_unlock();
+            interrupt_unlock(sigmask);
             job_fg_wait(jobid);
-            interrupt_lock();
+            interrupt_lock(sigmask);
         }
     }
  
     exit_forget_next_forced();
     jobs_update();
     
-    interrupt_unlock();
+    interrupt_unlock(sigmask);
 }
