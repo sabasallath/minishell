@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <signal.h>
 #include "jobs.h"
 
 /////////////////////////////////////////////////////
@@ -211,14 +208,16 @@ void job_print_with_status (jobid_t jobid, char* status) {
 /////////////////////////////////////////////////////
 
 void interrupt_lock(Sigmask sigmask) {
-    sigemptyset(&sigmask.current);
-    sigemptyset(&sigmask.saved);
-    sigaddset(&sigmask.current, SIGCHLD);
-    sigaddset(&sigmask.current, SIGINT);
-    sigaddset(&sigmask.current, SIGTSTP);
-    sigprocmask(SIG_BLOCK, &sigmask.current, &sigmask.saved);
+    Sigemptyset(&sigmask.current);
+    Sigemptyset(&sigmask.saved);
+    Sigaddset(&sigmask.current, SIGCHLD);
+    Sigaddset(&sigmask.current, SIGINT);
+    Sigaddset(&sigmask.current, SIGTSTP);
+    Sigprocmask(SIG_BLOCK, &sigmask.current, &sigmask.saved);
 }
 
 void interrupt_unlock(Sigmask sigmask) { 
-    sigprocmask(SIG_SETMASK, &sigmask.saved, NULL);
+	Sigemptyset(&sigmask.pending);
+	sigpending(&sigmask.pending);
+    Sigprocmask(SIG_SETMASK, &sigmask.saved, &sigmask.pending);
 }

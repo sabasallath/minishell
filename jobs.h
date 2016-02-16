@@ -124,6 +124,7 @@ void job_print_with_status (jobid_t jobid, char* status);
 typedef struct {
     sigset_t current;
     sigset_t saved;
+    sigset_t pending;
 } Sigmask;
 
 // Securise l'accès aux fonctions de mise à jour des jobs
