@@ -1,9 +1,9 @@
 #include "jobs.h"
 #include "minishell.h"
 #include "exit.h"
+#include "signals.h"
 
 // fonctions externes
-void shell_signals();
 void force_exit();
 void eval(char*cmdline);
 int parseline(char *buf, char **argv);
@@ -13,7 +13,7 @@ int main() {
     char cmdline[MAXLINE];                 // ligne de commande
 
     jobs_init();
-	shell_signals();
+	signals_init();
 
     while (1) {                            // boucle d'interpretation
         printf("<minishell> ");            // message d'invite

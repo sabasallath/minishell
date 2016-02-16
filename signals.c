@@ -1,5 +1,6 @@
 #include "minishell.h"
 #include "jobs.h"
+#include "signals.h"
 
 void handler_sigint (int sig) {
     jobid_t jobid = jobs_find_first_by_status(FG);
@@ -33,8 +34,36 @@ void handler_sigchld (int sig) {
     }
 }
 
-void shell_signals () {
+typedef struct {
+    bool locked;
+    sigset_t current;
+    sigset_t saved;
+} Lock;
+
+Lock lock;
+
+void signals_init () {
     Signal(SIGCHLD, handler_sigchld);
     Signal(SIGINT, handler_sigint);
     Signal(SIGTSTP, handler_sigtstp);
+
+    Sigemptyset(&lock.current);
+    Sigaddset(&lock.current, SIGCHLD);
+    Sigaddset(&lock.current, SIGINT);
+    Sigaddset(&lock.current, SIGTSTP);
+    Sigemptyset(&lock.saved);
+}
+
+void signals_lock () {
+    if (!lock.locked) {
+        lock.locked = true;
+        Sigprocmask(SIG_BLOCK, &lock.current, &lock.saved);
+    }
+}
+
+void signals_unlock () { 
+    if (lock.locked) {
+        lock.locked = false;
+        Sigprocmask(SIG_SETMASK, &lock.saved, NULL);
+    }
 }

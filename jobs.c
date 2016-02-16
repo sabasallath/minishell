@@ -1,4 +1,5 @@
 #include "jobs.h"
+#include "signals.h"
 
 /////////////////////////////////////////////////////
 // Type et constantes
@@ -73,16 +74,17 @@ void job_kill(jobid_t jobid, int sig) {
 }
 
 void job_change_status(jobid_t jobid, int sig) {
+	signals_unlock();
 	if (job_status_match(jobid, STOPPED) && sig != SIGCONT)
 		job_kill(jobid, SIGCONT);
     job_kill(jobid, sig);
 
     // On attends un peu pour laisser le temps au signal d'avoir un effet
-    sleep(1);
-
     // Certain signaux peuvent avoir été redefini par le processus enfant
     // et ne pas avoir l'effet par défaut.
     // Il n'est donc pas envisageable d'attendre indéfiniment. Tant pis.
+    sleep(1);
+	signals_lock();
     if (job_status_match(jobid, UPDATED))
         job_update(jobid);
 }
@@ -90,35 +92,26 @@ void job_change_status(jobid_t jobid, int sig) {
 void job_fg_wait(jobid_t jobid) {
 	if (!valid_jobid(jobid)) return;
 	if (!job_status_match(jobid, RUNNING)) return;
-
 	jobs[jobid].status |= FG;
+
+	signals_unlock();
     while (job_status_match(jobid, RUNNING))
         sleep(0);
+    signals_lock();
 
     if (job_status_match(jobid, UPDATED))
         job_update(jobid);
 }
 
 void job_updated(jobid_t jobid, int updated_status) {
-	if (!valid_jobid(jobid)) return;
-
-	jobs[jobid].status &= FG;
-	jobs[jobid].status |= UPDATED;
-	jobs[jobid].updated_status = updated_status;
-}
-
-void jobs_update () {
-	jobid_t i;
-	for (i = 0; i < MAXJOBS; i++) {
-		if (job_status_match(i, UPDATED)) {
-			job_update(i);
-		}
+	if (valid_jobid(jobid)) {
+		jobs[jobid].status &= FG;
+		jobs[jobid].status |= UPDATED;
+		jobs[jobid].updated_status = updated_status;
 	}
 }
 
-void job_update(jobid_t jobid) {
-	if (!valid_jobid(jobid)) return;
-
+void job_do_update(jobid_t jobid) {
 	bool was_fg = jobs[jobid].status & FG;
 	int status = jobs[jobid].updated_status;
 	if (WIFEXITED(status)) {
@@ -140,13 +133,26 @@ void job_update(jobid_t jobid) {
 	}
 }
 
+void jobs_update () {
+	jobid_t i;
+	for (i = 0; i < MAXJOBS; i++) {
+		if (job_status_match(i, UPDATED)) {
+			job_do_update(i);
+		}
+	}
+}
+
+void job_update(jobid_t jobid) {
+	if (valid_jobid(jobid))
+		job_do_update(jobid);
+}
+
 /////////////////////////////////////////////////////
 // Fonctions utilitaires pour manipuler les jobs
 /////////////////////////////////////////////////////
 
 pid_t job_pid(jobid_t jobid) {
-	if (!valid_jobid(jobid)) return 0;
-	return job_status_match(jobid, FREE)
+	return !valid_jobid(jobid) || job_status_match(jobid, FREE)
 			? 0
 			: jobs[jobid].pid;
 }
@@ -201,23 +207,4 @@ void job_print_with_pid (jobid_t jobid) {
 void job_print_with_status (jobid_t jobid, char* status) {
 	if (valid_jobid(jobid))
 		printf("[%d] %s `%s`\n", jobid + 1, status, jobs[jobid].cmdline);
-}
-
-/////////////////////////////////////////////////////
-// Securisation des operations sur les jobs
-/////////////////////////////////////////////////////
-
-void interrupt_lock(Sigmask sigmask) {
-    Sigemptyset(&sigmask.current);
-    Sigemptyset(&sigmask.saved);
-    Sigaddset(&sigmask.current, SIGCHLD);
-    Sigaddset(&sigmask.current, SIGINT);
-    Sigaddset(&sigmask.current, SIGTSTP);
-    Sigprocmask(SIG_BLOCK, &sigmask.current, &sigmask.saved);
-}
-
-void interrupt_unlock(Sigmask sigmask) { 
-	Sigemptyset(&sigmask.pending);
-	sigpending(&sigmask.pending);
-    Sigprocmask(SIG_SETMASK, &sigmask.saved, &sigmask.pending);
 }
