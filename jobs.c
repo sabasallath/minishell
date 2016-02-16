@@ -155,9 +155,7 @@ void job_update(jobid_t jobid) {
 	else if (WIFSIGNALED(status)) {
 		jobs[jobid].status = FREE;
 		if (!was_fg || WTERMSIG(status) != SIGINT)
-			#define _GNU_SOURCE
 			job_print_with_status(jobid, strsignal(WTERMSIG(status)));
-			#undef _GNU_SOURCE
 	}
 	else if (WIFSTOPPED(status)) {
 		jobs[jobid].status = STOPPED;
