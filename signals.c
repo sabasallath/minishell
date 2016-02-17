@@ -2,9 +2,16 @@
 #include "jobs.h"
 #include "signals.h"
 
+bool waiting;
+
 void handler_sigint (int sig) {
+    
     jobid_t jobid = jobs_find_first_by_status(FG);
-    if (jobid != INVALID_JOBID) {
+    if (waiting) {
+        printf("\n"); // Retour a la ligne après le symbole de controle
+        waiting = false;
+    }
+    else if (jobid != INVALID_JOBID) {
         printf("\n"); // Retour a la ligne après le symbole de controle
         if (job_status_match(jobid, STOPPED))
             job_kill(jobid, SIGCONT);

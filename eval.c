@@ -26,11 +26,11 @@ void eval(char *cmdline) {
     strcpy(buf, cmdline);
     bool bg = parseline(buf, argv);
 
-    signals_lock("eval");
+    signals_lock();
     if (!builtin_command(argv) && replace_kill_jobs(buf2, argv)) {
         int pid;
         if ((pid = Fork()) == 0) {
-            signals_unlock("child");
+            signals_unlock();
             exec_command(argv); // Ne retourne jamais
         }
 
@@ -48,6 +48,6 @@ void eval(char *cmdline) {
     }
 
     jobs_update();
-    signals_unlock("eval");
+    signals_unlock();
     exit_forget_next_forced();
 }

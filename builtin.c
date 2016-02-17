@@ -1,6 +1,9 @@
 #include "csapp.h"
+#include "signals.h"
 #include "jobs.h"
 #include "exit.h"
+
+bool waiting = false;
 
 jobid_t parse_jobid (char* arg) {
     if (*arg == '\0') {
@@ -133,12 +136,14 @@ void builtin_term (char** argv) {
 
 void builtin_wait () {
     jobid_t jobid;
-    signals_unlock("wait");
-    while ((jobid = jobs_find_first_by_status(~(FREE | STOPPED))) != INVALID_JOBID) {
+    waiting = true;
+    signals_unlock();
+    while (waiting && (jobid = jobs_find_first_by_status(~(FREE | STOPPED))) != INVALID_JOBID) {
         sleep(0);
         jobs_update();
     }
-    signals_lock("wait");
+    signals_lock();
+    waiting = false;
 }
 
 #define builtin(name, exec) if (strcmp(argv[0], name) == 0) { exec; return true; }
