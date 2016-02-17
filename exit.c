@@ -30,7 +30,7 @@ void exit_try () {
     }
 
     if (exit_next_forced > 0) {
-        signals_unlock();
+        signals_unlock("exit");
         try_terminate_jobs();
         exit(0);
     }

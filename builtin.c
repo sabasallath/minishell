@@ -133,10 +133,12 @@ void builtin_term (char** argv) {
 
 void builtin_wait () {
     jobid_t jobid;
+    signals_unlock("wait");
     while ((jobid = jobs_find_first_by_status(~(FREE | STOPPED))) != INVALID_JOBID) {
         sleep(0);
         jobs_update();
     }
+    signals_lock("wait");
 }
 
 #define builtin(name, exec) if (strcmp(argv[0], name) == 0) { exec; return true; }

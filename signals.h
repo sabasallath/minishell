@@ -8,11 +8,11 @@ void signals_init ();
 
 // Bloque les signaux importants pour le shell
 // s'ils ne sont pas déjà bloqués
-void signals_lock ();
+void signals_lock (char* desc);
 
 // Débloque les signaux importants pour le shell
 // s'ils ont été bloqués au préalable par un
 // appel à `signals_lock`
-void signals_unlock ();
+void signals_unlock (char* desc);
 
 #endif

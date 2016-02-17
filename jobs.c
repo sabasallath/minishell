@@ -8,7 +8,6 @@
 typedef struct {
     pid_t pid;
     JobStatus status;
-    int argc;
     char cmdline[MAXLINE];
     int updated_status;
 } Job;
@@ -74,7 +73,7 @@ void job_kill(jobid_t jobid, int sig) {
 }
 
 void job_change_status(jobid_t jobid, int sig) {
-	signals_unlock();
+	signals_unlock("change_status");
 	if (job_status_match(jobid, STOPPED) && sig != SIGCONT)
 		job_kill(jobid, SIGCONT);
     job_kill(jobid, sig);
@@ -84,7 +83,7 @@ void job_change_status(jobid_t jobid, int sig) {
     // et ne pas avoir l'effet par défaut.
     // Il n'est donc pas envisageable d'attendre indéfiniment. Tant pis.
     sleep(1);
-	signals_lock();
+	signals_lock("change_status");
     if (job_status_match(jobid, UPDATED))
         job_update(jobid);
 }
@@ -94,10 +93,10 @@ void job_fg_wait(jobid_t jobid) {
 	if (!job_status_match(jobid, RUNNING)) return;
 	jobs[jobid].status |= FG;
 
-	signals_unlock();
+	signals_unlock("fg_wait");
     while (job_status_match(jobid, RUNNING))
         sleep(0);
-    signals_lock();
+    signals_lock("fg_wait");
 
     if (job_status_match(jobid, UPDATED))
         job_update(jobid);

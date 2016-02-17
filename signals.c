@@ -6,7 +6,9 @@ void handler_sigint (int sig) {
     jobid_t jobid = jobs_find_first_by_status(FG);
     if (jobid != INVALID_JOBID) {
         printf("\n"); // Retour a la ligne après le symbole de controle
-        job_change_status(jobid, SIGINT);
+        if (job_status_match(jobid, STOPPED))
+            job_kill(jobid, SIGCONT);
+        job_kill(jobid, SIGINT);
     }
 }
 
@@ -14,7 +16,7 @@ void handler_sigtstp (int sig) {
     jobid_t jobid = jobs_find_first_by_status(FG);
     if (jobid != INVALID_JOBID) {
         printf("\n"); // Retour a la ligne après le symbole de controle
-        job_change_status(jobid, SIGSTOP);
+        job_kill(jobid, SIGSTOP);
     }
 }
 
@@ -37,7 +39,6 @@ void handler_sigchld (int sig) {
 typedef struct {
     bool locked;
     sigset_t current;
-    sigset_t saved;
 } Lock;
 
 Lock lock;
@@ -51,19 +52,18 @@ void signals_init () {
     Sigaddset(&lock.current, SIGCHLD);
     Sigaddset(&lock.current, SIGINT);
     Sigaddset(&lock.current, SIGTSTP);
-    Sigemptyset(&lock.saved);
 }
 
-void signals_lock () {
+void signals_lock (char* desc) {
     if (!lock.locked) {
         lock.locked = true;
-        Sigprocmask(SIG_BLOCK, &lock.current, &lock.saved);
+        Sigprocmask(SIG_BLOCK, &lock.current, NULL);
     }
 }
 
-void signals_unlock () { 
+void signals_unlock (char* desc) { 
     if (lock.locked) {
         lock.locked = false;
-        Sigprocmask(SIG_SETMASK, &lock.saved, NULL);
+        Sigprocmask(SIG_UNBLOCK, &lock.current, NULL);
     }
 }
