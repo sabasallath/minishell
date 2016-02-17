@@ -5,7 +5,7 @@
 bool parseline(char *buf, char **argv) {
     char *delim;         // pointe vers premier delimiteur espace
     int argc;            // nb d'arguments
-    bool bg;              // travail d'arriere-plan ?
+    bool bg;             // travail d'arriere-plan ?
 
     buf[strlen(buf)-1] = ' ';     // remplacer '\n' final par espace
     while (*buf && (*buf == ' ')) // ignorer espaces au debut

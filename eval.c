@@ -4,10 +4,11 @@
 #include "minishell.h"
 #include "exit.h"
 #include "signals.h"
-#include "parseline.h"
 
 // fonctions externes
 bool builtin_command(char **argv);
+bool parseline(char *buf, char **argv);
+bool replace_kill_jobs (char* buf, char** argv);
 
 void exec_command(char** argv) {
     setpgid(0, 0);
@@ -39,14 +40,14 @@ void eval(char *cmdline) {
         }
 
         if (bg) {
-             job_print_with_pid(jobid);
+            job_print_with_pid(jobid);
         }
         else {
             job_fg_wait(jobid);
         }
     }
 
-    exit_forget_next_forced();
     jobs_update();
     signals_unlock();
+    exit_forget_next_forced();
 }
