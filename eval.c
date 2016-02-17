@@ -26,9 +26,7 @@ void eval(char *cmdline) {
     bool bg = parseline(buf, argv);
 
     signals_lock();
-    if (!builtin_command(argv)) {
-        replace_kill_jobs(buf2, argv);
-
+    if (!builtin_command(argv) && replace_kill_jobs(buf2, argv)) {
         int pid;
         if ((pid = Fork()) == 0) {
             signals_unlock();
@@ -47,7 +45,7 @@ void eval(char *cmdline) {
             job_fg_wait(jobid);
         }
     }
- 
+
     exit_forget_next_forced();
     jobs_update();
     signals_unlock();

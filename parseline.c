@@ -40,8 +40,8 @@ pid_t read_job_pid(char* buf) {
             : job_pid(jobid);
 }
 
-void replace_kill_jobs (char* buf, char** argv) {
-    if (strcmp(argv[0], "kill") != 0) return;
+bool replace_kill_jobs (char* buf, char** argv) {
+    if (strcmp(argv[0], "kill") != 0) return true;
 
     int i;
     for (i = 1; argv[i] != NULL; i++) {
@@ -49,8 +49,7 @@ void replace_kill_jobs (char* buf, char** argv) {
             pid_t pid = read_job_pid(argv[i] + 1);
             if (pid == 0) {
                 printf("Invalid jobid `%s`\n", argv[i] + 1);
-                argv[0] = NULL;
-                return;
+                return false;
             }
 
             sprintf(buf, "%d", pid);
@@ -58,4 +57,6 @@ void replace_kill_jobs (char* buf, char** argv) {
             buf = strchr(buf, '\0') + 1;
         }
     }
+
+    return true;
 }
