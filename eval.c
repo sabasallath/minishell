@@ -47,7 +47,7 @@ void eval(char *cmdline) {
         }
     }
 
-    jobs_update();
+    jobs_print_update();
     signals_unlock();
     exit_forget_next_forced();
 }

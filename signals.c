@@ -38,7 +38,7 @@ void handler_sigchld (int sig) {
         }
 
         // On indique que le status du job doit être mise à jour
-        job_updated(jobid, status);
+        job_update(jobid, status);
     }
 }
 

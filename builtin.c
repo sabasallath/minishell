@@ -94,7 +94,7 @@ jobid_t read_jobid (char** argv, JobStatus status) {
 }
 
 void builtin_jobs () {
-    jobs_print(STOPPED | RUNNING);
+    jobs_print(STOPPED | RUNNING, false);
 }
 
 void builtin_fg (char** argv) {
@@ -138,10 +138,11 @@ void builtin_wait () {
     jobid_t jobid;
     waiting = true;
     signals_unlock();
-    while (waiting && (jobid = jobs_find_first_by_status(~(FREE | STOPPED))) != INVALID_JOBID) {
+    while (waiting && (jobid = jobs_find_first_by_status(~(FREE | DONE | STOPPED))) != INVALID_JOBID) {
         sleep(0);
-        jobs_update();
+        jobs_print_update();
     }
+
     signals_lock();
     waiting = false;
 }

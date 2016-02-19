@@ -16,16 +16,22 @@ void try_terminate_jobs () {
         }
     }
 
-    sleep(2);          // On attends un peu que les jobs aient le temps de se terminer
-    jobs_update();     // Traite et affiche les jobs terminés
-    jobs_print(~FREE); // Signal les jobs non terminés a l'utilisateur
+    // On attends un peu que les jobs aient le temps de se terminer
+    int time = 1;
+    while ((time = sleep(time)) > 0) {
+        jobid_t jobid = jobs_find_first_by_status(~(FREE | DONE));
+        if (jobid == INVALID_JOBID) // Tous les jobs terminés
+            break;
+    }
+
+    jobs_print(~FREE, false);  // Signal les jobs non terminés a l'utilisateur
+    jobs_print_update();       // Traite et affiche les jobs terminés
 }
 
 void exit_try () {
-    jobs_update();
-
-    jobid_t jobid = jobs_find_first_by_status(~FREE);
+    jobid_t jobid = jobs_find_first_by_status(~(FREE | DONE));
     if (jobid == INVALID_JOBID) {
+        jobs_print_update();
         exit(0);
     }
 

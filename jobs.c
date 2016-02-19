@@ -5,11 +5,19 @@
 // Type et constantes
 /////////////////////////////////////////////////////
 
+typedef enum {
+	NO            = 0,
+	YES           = 1,
+	YES_WHILE_FG  = 2,
+} Updated;
+
 typedef struct {
     pid_t pid;
     JobStatus status;
     char cmdline[MAXLINE];
-    int updated_status;
+
+    Updated updated;
+    int wait_status;
 } Job;
 
 Job jobs[MAXJOBS] = {{0}};
@@ -39,7 +47,7 @@ void jobs_init () {
 	}
 }
 
-void cmdline_copy(char* src, char dst[]) {
+void cmdline_copy (char* src, char dst[]) {
 	// Ignore les espaces en début de chaîne
 	while (*src == ' ') src++;
 
@@ -68,13 +76,15 @@ jobid_t jobs_add (pid_t pid, char* cmdline) {
 	return jobid;
 }
 
-void job_kill(jobid_t jobid, int sig) {
-	Kill(jobs[jobid].pid, sig);
+int job_kill (jobid_t jobid, int sig) {
+	return kill(jobs[jobid].pid, sig);
 }
 
-void job_change_status(jobid_t jobid, int sig) {
+void job_change_status (jobid_t jobid, int sig) {
+	bool continue_before = sig != SIGCONT && job_status_match(jobid, STOPPED);
+
 	signals_unlock();
-	if (job_status_match(jobid, STOPPED) && sig != SIGCONT)
+	if (continue_before)
 		job_kill(jobid, SIGCONT);
     job_kill(jobid, sig);
 
@@ -82,13 +92,18 @@ void job_change_status(jobid_t jobid, int sig) {
     // Certain signaux peuvent avoir été redefini par le processus enfant
     // et ne pas avoir l'effet par défaut.
     // Il n'est donc pas envisageable d'attendre indéfiniment. Tant pis.
-    sleep(1);
+    int time = 1;
+    while ((time = sleep(time)) > 0) {
+    	if (jobs[jobid].updated && (!continue_before || !job_status_match(jobid, RUNNING))) {
+    		break;
+    	}
+    }
 	signals_lock();
-    if (job_status_match(jobid, UPDATED))
-        job_update(jobid);
+
+    job_print_update(jobid);
 }
 
-void job_fg_wait(jobid_t jobid) {
+void job_fg_wait (jobid_t jobid) {
 	if (!valid_jobid(jobid)) return;
 	if (!job_status_match(jobid, RUNNING)) return;
 	jobs[jobid].status |= FG;
@@ -98,59 +113,71 @@ void job_fg_wait(jobid_t jobid) {
         sleep(0);
     signals_lock();
 
-    if (job_status_match(jobid, UPDATED))
-        job_update(jobid);
+    job_print_update(jobid);
 }
 
-void job_updated(jobid_t jobid, int updated_status) {
+void job_update (jobid_t jobid, int wait_status) {
 	if (valid_jobid(jobid)) {
-		jobs[jobid].status &= FG;
-		jobs[jobid].status |= UPDATED;
-		jobs[jobid].updated_status = updated_status;
-	}
-}
+		jobs[jobid].updated = jobs[jobid].status & FG ? YES_WHILE_FG : YES;
+		jobs[jobid].wait_status = wait_status;
 
-void job_do_update(jobid_t jobid) {
-	bool was_fg = jobs[jobid].status & FG;
-	int status = jobs[jobid].updated_status;
-	if (WIFEXITED(status)) {
-		jobs[jobid].status = FREE;
-		if (!was_fg) job_print_with_status(jobid, "Done");
-	}
-	else if (WIFSIGNALED(status)) {
-		jobs[jobid].status = FREE;
-		if (!was_fg || WTERMSIG(status) != SIGINT)
-			job_print_with_status(jobid, strsignal(WTERMSIG(status)));
-	}
-	else if (WIFSTOPPED(status)) {
-		jobs[jobid].status = STOPPED;
-		job_print_with_status(jobid, "Stopped");
-	}
-	else if (WIFCONTINUED(status)) {
-		jobs[jobid].status = RUNNING;
-		job_print_with_status(jobid, "Continued");
-	}
-}
-
-void jobs_update () {
-	jobid_t i;
-	for (i = 0; i < MAXJOBS; i++) {
-		if (job_status_match(i, UPDATED)) {
-			job_do_update(i);
+		if (WIFEXITED(wait_status)) {
+			jobs[jobid].status = DONE;
+		}
+		else if (WIFSIGNALED(wait_status)) {
+			jobs[jobid].status = DONE;
+		}
+		else if (WIFSTOPPED(wait_status)) {
+			jobs[jobid].status = STOPPED;
+		}
+		else if (WIFCONTINUED(wait_status)) {
+			jobs[jobid].status = RUNNING;
 		}
 	}
 }
 
-void job_update(jobid_t jobid) {
-	if (valid_jobid(jobid))
-		job_do_update(jobid);
+void job_do_print_update (jobid_t jobid) {
+	bool while_fg = jobs[jobid].updated == YES_WHILE_FG;
+	int wait_status = jobs[jobid].wait_status;
+	jobs[jobid].updated = NO;
+	jobs[jobid].wait_status = 0;
+
+	if (WIFEXITED(wait_status)) {
+		jobs[jobid].status = FREE;
+		if (!while_fg) job_print_with_status(jobid, "Done");
+	}
+	else if (WIFSIGNALED(wait_status)) {
+		jobs[jobid].status = FREE;
+		if (!while_fg || WTERMSIG(wait_status) != SIGINT)
+			job_print_with_status(jobid, strsignal(WTERMSIG(wait_status)));
+	}
+	else if (WIFSTOPPED(wait_status)) {
+		job_print_with_status(jobid, "Stopped");
+	}
+	else if (WIFCONTINUED(wait_status)) {
+		job_print_with_status(jobid, "Continued");
+	}
+}
+
+void jobs_print_update () {
+	jobid_t i;
+	for (i = 0; i < MAXJOBS; i++) {
+		if (jobs[i].updated) {
+			job_do_print_update(i);
+		}
+	}
+}
+
+void job_print_update (jobid_t jobid) {
+	if (valid_jobid(jobid) && jobs[jobid].updated)
+		job_do_print_update(jobid);
 }
 
 /////////////////////////////////////////////////////
 // Fonctions utilitaires pour manipuler les jobs
 /////////////////////////////////////////////////////
 
-pid_t job_pid(jobid_t jobid) {
+pid_t job_pid (jobid_t jobid) {
 	return !valid_jobid(jobid) || job_status_match(jobid, FREE)
 			? 0
 			: jobs[jobid].pid;
@@ -173,10 +200,10 @@ bool job_status_match (jobid_t jobid, JobStatus status) {
 	return jobs[jobid].status & status;
 }
 
-void jobs_print (JobStatus status) {
+void jobs_print (JobStatus status, bool updated) {
 	jobid_t i;
 	for (i = 0; i < MAXJOBS; i++) {
-		if (job_status_match(i, status)) {
+		if (job_status_match(i, status) && (!jobs[i].updated || updated)) {
 			job_print(i);
 		}
 	}
@@ -185,10 +212,10 @@ void jobs_print (JobStatus status) {
 char* job_status_str (jobid_t jobid) {
 	if (!valid_jobid(jobid)) return "Invalid";
 
-	if (job_status_match(jobid, FREE)) return "Free";
+	if (job_status_match(jobid, FREE))    return "Free";
 	if (job_status_match(jobid, STOPPED)) return "Stopped";
 	if (job_status_match(jobid, RUNNING)) return "Running";
-	if (job_status_match(jobid, UPDATED)) return "Updated";
+	if (job_status_match(jobid, DONE))    return "Done";
 
 	return "Unkown";
 }

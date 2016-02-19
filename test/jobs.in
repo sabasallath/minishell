@@ -1,0 +1,12 @@
+sleep 100000 &
+sleep 200000 &
+sleep 300000 &
+
+stop %1
+stop %2
+bg %1
+stop %3
+
+kill -SIGTERM %1
+kill -SIGTERM %2
+kill -SIGTERM %3
