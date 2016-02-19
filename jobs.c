@@ -200,10 +200,10 @@ void job_print (jobid_t jobid) {
 
 void job_print_with_pid (jobid_t jobid) {
 	if (valid_jobid(jobid))
-		printf("[%d] %d `%s`\n", jobid + 1, jobs[jobid].pid, jobs[jobid].cmdline);
+		printf("[%d]  %d\t%s\n", jobid + 1, jobs[jobid].pid, jobs[jobid].cmdline);
 }
 
 void job_print_with_status (jobid_t jobid, char* status) {
 	if (valid_jobid(jobid))
-		printf("[%d] %s `%s`\n", jobid + 1, status, jobs[jobid].cmdline);
+		printf("[%d]  %s\t%s\n", jobid + 1, status, jobs[jobid].cmdline);
 }
