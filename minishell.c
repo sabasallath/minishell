@@ -6,8 +6,6 @@
 // fonctions externes
 void eval(char*cmdline);
 
-bool stdin_is_tty0;
-
 int main() {
     char cmdline[MAXLINE];                 // ligne de commande
 
