@@ -36,6 +36,8 @@ bool valid_jobid (jobid_t jobid) {
 	return false;
 }
 
+#define status_match(jobid, status_p) (jobs[jobid].status & status_p)
+
 /////////////////////////////////////////////////////
 // Fonctions de gestion des jobs
 /////////////////////////////////////////////////////
@@ -81,7 +83,7 @@ int job_kill (jobid_t jobid, int sig) {
 }
 
 void job_change_status (jobid_t jobid, int sig) {
-	bool continue_before = sig != SIGCONT && job_status_match(jobid, STOPPED);
+	bool continue_before = sig != SIGCONT && status_match(jobid, STOPPED);
 
 	signals_unlock();
 	if (continue_before)
@@ -94,7 +96,7 @@ void job_change_status (jobid_t jobid, int sig) {
     // Il n'est donc pas envisageable d'attendre indéfiniment. Tant pis.
     int time = 1;
     while ((time = sleep(time)) > 0) {
-    	if (jobs[jobid].updated && (!continue_before || !job_status_match(jobid, RUNNING))) {
+    	if (jobs[jobid].updated && (!continue_before || !status_match(jobid, RUNNING))) {
     		break;
     	}
     }
@@ -105,11 +107,11 @@ void job_change_status (jobid_t jobid, int sig) {
 
 void job_fg_wait (jobid_t jobid) {
 	if (!valid_jobid(jobid)) return;
-	if (!job_status_match(jobid, RUNNING)) return;
+	if (!status_match(jobid, RUNNING)) return;
 	jobs[jobid].status |= FG;
 
 	signals_unlock();
-    while (job_status_match(jobid, RUNNING))
+    while (status_match(jobid, RUNNING))
         sleep(0);
     signals_lock();
 
@@ -178,32 +180,31 @@ void job_print_update (jobid_t jobid) {
 /////////////////////////////////////////////////////
 
 pid_t job_pid (jobid_t jobid) {
-	return !valid_jobid(jobid) || job_status_match(jobid, FREE)
+	return !valid_jobid(jobid) || status_match(jobid, FREE)
 			? 0
 			: jobs[jobid].pid;
 }
 
 jobid_t jobs_find_first_by_status (JobStatus status) {
 	jobid_t i = 0;
-	while (i < MAXJOBS && !job_status_match(i, status)) i++;
+	while (i < MAXJOBS && !status_match(i, status)) i++;
 	return i == MAXJOBS ? INVALID_JOBID : i;
 }
 
 jobid_t jobs_find_by_pid (pid_t pid) {
 	jobid_t i = 0;
 	while (i < MAXJOBS && jobs[i].pid != pid) i++;
-	return i == MAXJOBS || job_status_match(i, FREE) ? INVALID_JOBID : i;
+	return i == MAXJOBS || status_match(i, FREE) ? INVALID_JOBID : i;
 }
 
 bool job_status_match (jobid_t jobid, JobStatus status) {
-	if (!valid_jobid(jobid)) return false;
-	return jobs[jobid].status & status;
+	return valid_jobid(jobid) && status_match(jobid, status);
 }
 
 void jobs_print (JobStatus status, bool updated) {
 	jobid_t i;
 	for (i = 0; i < MAXJOBS; i++) {
-		if (job_status_match(i, status) && (!jobs[i].updated || updated)) {
+		if (status_match(i, status) && (!jobs[i].updated || updated)) {
 			job_print(i);
 		}
 	}
@@ -212,10 +213,10 @@ void jobs_print (JobStatus status, bool updated) {
 char* job_status_str (jobid_t jobid) {
 	if (!valid_jobid(jobid)) return "Invalid";
 
-	if (job_status_match(jobid, FREE))    return "Free";
-	if (job_status_match(jobid, STOPPED)) return "Stopped";
-	if (job_status_match(jobid, RUNNING)) return "Running";
-	if (job_status_match(jobid, DONE))    return "Done";
+	if (status_match(jobid, FREE))    return "Free";
+	if (status_match(jobid, STOPPED)) return "Stopped";
+	if (status_match(jobid, RUNNING)) return "Running";
+	if (status_match(jobid, DONE))    return "Done";
 
 	return "Unkown";
 }
