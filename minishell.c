@@ -5,25 +5,50 @@
 #include "dirs.h"
 #include "terminal.h"
 
+#include <readline/readline.h>
+#include <readline/history.h>
+
 // fonctions externes
 void eval(char*cmdline);
 
 int main() {
-    char cmdline[MAXLINE];                 // ligne de commande
+    char* cmdline; // ligne de commande
 
     terminal_init();
+    cmdline = is_terminal ? NULL : malloc(MAXLINE * sizeof(char));
     jobs_init();
 	signals_init();
     dirs_init();
 
-    while (1) {                            // boucle d'interpretation
-        terminal_printf("<minishell> ");        // message d'invite
-        Fgets(cmdline, MAXLINE, stdin);    // lire commande
-        if (feof(stdin)) {                 // fin (control-D)
-            terminal_printf("\n");
-            exit_force();
+    if (is_terminal) {
+        // En console, utilisation de readline
+        while (1) { // boucle d'interpretation
+            cmdline = readline("<minishell> "); // lire commande
+
+            if (cmdline == NULL) { // fin (control-D)
+                free(cmdline);
+                terminal_printf("\n");
+                exit_force();
+            }
+
+            eval(cmdline); // interpreter commande
+            add_history(cmdline);
+            free(cmdline);
         }
-        else
-            eval(cmdline);                 // interpreter commande
+    }
+    else {
+        // Sans console, lecture ligne à ligne bête et méchante
+        while (1) { // boucle d'interpretation
+            Fgets(cmdline, MAXLINE, stdin); // lire commande
+            cmdline[strlen(cmdline) - 1] = '\0';
+
+            if (feof(stdin)) { // fin (control-D)
+                free(cmdline);
+                terminal_printf("\n");
+                exit_force();
+            }
+
+            eval(cmdline); // interpreter commande
+        }
     }
 }

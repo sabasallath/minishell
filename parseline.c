@@ -7,7 +7,7 @@ bool parseline(char *buf, char **argv) {
     int argc;            // nb d'arguments
     bool bg;             // travail d'arriere-plan ?
 
-    buf[strlen(buf)-1] = ' ';     // remplacer '\n' final par espace
+    buf[strlen(buf)] = ' ';     // remplacer '\0' final par espace
     while (*buf && (*buf == ' ')) // ignorer espaces au debut
         buf++;
 
