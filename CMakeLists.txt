@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(minishell C)
 
 set(CMAKE_C_COMPILER gcc)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -pedantic -g -std=c99 -D_GNU_SOURCE")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -pedantic -g -std=c99")
 
 set(minishell_SRC
     builtin.c
@@ -19,9 +19,9 @@ set(minishell_SRC
     minishell.h
     parseline.c
     signals.c
-    signals.h
     terminal.c
     terminal.h)
 
 add_executable(minishell ${minishell_SRC})
+target_compile_options(minishell PUBLIC -D_GNU_SOURCE)
 target_link_libraries(minishell pthread)

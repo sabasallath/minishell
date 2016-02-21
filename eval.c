@@ -1,9 +1,7 @@
 /* eval : interprete une ligne de commande passee en parametre       */
-#include <signal.h>
 #include "jobs.h"
 #include "minishell.h"
 #include "exit.h"
-#include "signals.h"
 
 // fonctions externes
 bool builtin_command(char **argv);
@@ -30,11 +28,9 @@ void eval(char *cmdline) {
     strcpy(buf, cmdline);
     bool bg = parseline(buf, argv);
 
-    signals_lock();
     if (!builtin_command(argv) && replace_kill_jobs(buf2, argv)) {
         int pid;
         if ((pid = Fork()) == 0) {
-            signals_unlock();
             exec_command(argv); // Ne retourne jamais
         }
 
@@ -52,6 +48,5 @@ void eval(char *cmdline) {
     }
 
     jobs_print_update();
-    signals_unlock();
     exit_forget_next_forced();
 }

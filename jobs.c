@@ -1,5 +1,4 @@
 #include "jobs.h"
-#include "signals.h"
 #include "terminal.h"
 
 /////////////////////////////////////////////////////
@@ -41,6 +40,14 @@ bool valid_jobid (jobid_t jobid) {
 #define status_match(jobid, status_p) (jobs[jobid].status & (status_p))
 
 /////////////////////////////////////////////////////
+// Fonctions pour les signaux (voir signals.c)
+/////////////////////////////////////////////////////
+
+void signals_init ();
+void signals_lock ();
+void signals_unlock ();
+
+/////////////////////////////////////////////////////
 // Fonctions de gestion des jobs
 /////////////////////////////////////////////////////
 
@@ -49,6 +56,8 @@ void jobs_init () {
 	for (i=0; i < MAXJOBS; i++) {
 		jobs[i].status = FREE;
 	}
+
+	signals_init();
 }
 
 void cmdline_copy (char* src, char dst[]) {
@@ -86,15 +95,17 @@ int job_kill (jobid_t jobid, int sig) {
 }
 
 void job_change_status (jobid_t jobid, int sig) {
-	bool continue_before = sig != SIGCONT && status_match(jobid, STOPPED);
+	bool continue_before = status_match(jobid, STOPPED)
+			&& sig != SIGCONT
+			&& sig != SIGSTOP
+			&& sig != SIGTSTP;
 
-	signals_unlock();
 	if (continue_before)
 		job_kill(jobid, SIGCONT);
     job_kill(jobid, sig);
 
     // On attends un peu pour laisser le temps au signal d'avoir un effet
-    // Certain signaux peuvent avoir été redefini par le processus enfant
+    // Certain signaux peuvent avoir été redéfini par le processus enfant
     // et ne pas avoir l'effet par défaut.
     // Il n'est donc pas envisageable d'attendre indéfiniment. Tant pis.
     int time = 1;
@@ -103,7 +114,6 @@ void job_change_status (jobid_t jobid, int sig) {
     		break;
     	}
     }
-	signals_lock();
 
     job_print_update(jobid);
 }
@@ -119,15 +129,14 @@ void job_fg_wait (jobid_t jobid, bool print) {
 	else if (print)
 		job_print(jobid);
 
+	signals_lock();
 	jobs[jobid].status |= FG;
-
 	signals_unlock();
-    while (status_match(jobid, RUNNING))
-        sleep(0);
-    signals_lock();
 
-    terminal_restore(&jobs[jobid].termios);
+	while (status_match(jobid, RUNNING))
+        sleep(1);
 
+    terminal_release(&jobs[jobid].termios);
     job_print_update(jobid);
 }
 
@@ -172,20 +181,26 @@ void job_do_print_update (jobid_t jobid) {
 	else if (WIFCONTINUED(wait_status)) {
 		job_print_with_status(jobid, "Continued");
 	}
+
 }
 
 void jobs_print_update () {
 	jobid_t i;
+	signals_lock();
 	for (i = 0; i < MAXJOBS; i++) {
 		if (jobs[i].updated) {
 			job_do_print_update(i);
 		}
 	}
+	signals_unlock();
 }
 
 void job_print_update (jobid_t jobid) {
-	if (valid_jobid(jobid) && jobs[jobid].updated)
+	signals_lock();
+	if (valid_jobid(jobid) && jobs[jobid].updated) {
 		job_do_print_update(jobid);
+	}
+	signals_unlock();
 }
 
 /////////////////////////////////////////////////////

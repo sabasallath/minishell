@@ -30,7 +30,7 @@ void terminal_grab(pid_t pid, struct termios* termios) {
     }
 }
 
-void terminal_restore(struct termios* termios) {
+void terminal_release(struct termios* termios) {
     if (is_terminal) {
         tcgetattr(STDIN_FILENO, termios);
         tcsetpgrp(STDIN_FILENO, shell_pid);

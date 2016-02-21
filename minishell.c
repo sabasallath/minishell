@@ -1,7 +1,6 @@
 #include "jobs.h"
 #include "minishell.h"
 #include "exit.h"
-#include "signals.h"
 #include "dirs.h"
 #include "terminal.h"
 
@@ -13,7 +12,6 @@ int main() {
 
     terminal_init();
     jobs_init();
-	signals_init();
     dirs_init();
 
     while (1) {                            // boucle d'interpretation

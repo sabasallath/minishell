@@ -1,7 +1,6 @@
 #include "minishell.h"
 #include "jobs.h"
 #include "terminal.h"
-#include "signals.h"
 
 bool waiting;
 
@@ -28,33 +27,28 @@ void handler_sigchld (int sig) {
     }
 }
 
-typedef struct {
-    bool locked;
-    sigset_t current;
-} Lock;
+sigset_t lock;
 
-Lock lock;
-
+// Initialise la gestion des signaux utilisées par le shell
+// (assigne les handlers et prépare les bloquages)
 void signals_init () {
     Signal(SIGCHLD, handler_sigchld);
     Signal(SIGINT, handler_sigint);
     Signal(SIGTSTP, SIG_IGN);
 
-    Sigemptyset(&lock.current);
-    Sigaddset(&lock.current, SIGCHLD);
-    Sigaddset(&lock.current, SIGINT);
+    Sigemptyset(&lock);
+    Sigaddset(&lock, SIGCHLD);
+    Sigaddset(&lock, SIGTSTP);
 }
 
+// Bloque les signaux importants pour le shell s'ils ne sont
+// pas déjà bloqués
 void signals_lock (char* desc) {
-    if (!lock.locked) {
-        lock.locked = true;
-        Sigprocmask(SIG_BLOCK, &lock.current, NULL);
-    }
+    Sigprocmask(SIG_BLOCK, &lock, NULL);
 }
 
+// Débloque les signaux importants pour le shell s'ils ont
+// été bloqués au préalable par un appel à `signals_lock`
 void signals_unlock (char* desc) {
-    if (lock.locked) {
-        lock.locked = false;
-        Sigprocmask(SIG_UNBLOCK, &lock.current, NULL);
-    }
+    Sigprocmask(SIG_UNBLOCK, &lock, NULL);
 }

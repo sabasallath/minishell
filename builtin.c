@@ -1,5 +1,4 @@
 #include "csapp.h"
-#include "signals.h"
 #include "jobs.h"
 #include "dirs.h"
 #include "exit.h"
@@ -133,13 +132,11 @@ void builtin_term (char** argv) {
 void builtin_wait () {
     jobid_t jobid;
     waiting = true;
-    signals_unlock();
     while (waiting && (jobid = jobs_find_first_by_status(~(FREE | DONE | STOPPED))) != INVALID_JOBID) {
         sleep(0);
         jobs_print_update();
     }
 
-    signals_lock();
     waiting = false;
 }
 

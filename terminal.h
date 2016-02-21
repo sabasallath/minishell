@@ -7,6 +7,6 @@ bool is_terminal;
 void terminal_init();
 void terminal_init_termios(struct termios* termios);
 void terminal_grab(pid_t pid, struct termios* termios);
-void terminal_restore(struct termios* termios);
+void terminal_release(struct termios* termios);
 
 #endif

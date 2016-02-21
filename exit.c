@@ -1,6 +1,5 @@
 #include "minishell.h"
 #include "jobs.h"
-#include "signals.h"
 #include "exit.h"
 
 static int exit_next_forced = 0;
@@ -36,7 +35,6 @@ void exit_try () {
     }
 
     if (exit_next_forced > 0) {
-        signals_unlock("exit");
         try_terminate_jobs();
         exit(0);
     }
