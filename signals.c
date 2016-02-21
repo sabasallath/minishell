@@ -6,24 +6,9 @@
 bool waiting;
 
 void handler_sigint (int sig) {
-    jobid_t jobid = jobs_find_first_by_status(FG);
     if (waiting) {
         terminal_printf("\n"); // Retour a la ligne après le symbole de controle
         waiting = false;
-    }
-    else if (jobid != INVALID_JOBID) {
-        terminal_printf("\n"); // Retour a la ligne après le symbole de controle
-        if (job_status_match(jobid, STOPPED))
-            job_kill(jobid, SIGCONT);
-        job_kill(jobid, SIGINT);
-    }
-}
-
-void handler_sigtstp (int sig) {
-    jobid_t jobid = jobs_find_first_by_status(FG);
-    if (jobid != INVALID_JOBID) {
-        terminal_printf("\n"); // Retour a la ligne après le symbole de controle
-        job_kill(jobid, SIGSTOP);
     }
 }
 
@@ -53,12 +38,11 @@ Lock lock;
 void signals_init () {
     Signal(SIGCHLD, handler_sigchld);
     Signal(SIGINT, handler_sigint);
-    Signal(SIGTSTP, handler_sigtstp);
+    Signal(SIGTSTP, SIG_IGN);
 
     Sigemptyset(&lock.current);
     Sigaddset(&lock.current, SIGCHLD);
     Sigaddset(&lock.current, SIGINT);
-    Sigaddset(&lock.current, SIGTSTP);
 }
 
 void signals_lock (char* desc) {
