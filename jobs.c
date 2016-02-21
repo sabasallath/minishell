@@ -15,6 +15,7 @@ typedef struct {
     pid_t pid;
     JobStatus status;
     char cmdline[MAXLINE];
+	struct termios termios;
 
     Updated updated;
     int wait_status;
@@ -36,7 +37,7 @@ bool valid_jobid (jobid_t jobid) {
 	return false;
 }
 
-#define status_match(jobid, status_p) (jobs[jobid].status & status_p)
+#define status_match(jobid, status_p) (jobs[jobid].status & (status_p))
 
 /////////////////////////////////////////////////////
 // Fonctions de gestion des jobs
@@ -72,6 +73,8 @@ jobid_t jobs_add (pid_t pid, char* cmdline) {
 	if (jobid != INVALID_JOBID) {
 		job->pid = pid;
 		job->status = RUNNING;
+		if (is_terminal)
+			job->termios = termios;
 		cmdline_copy(cmdline, job->cmdline);
 	}
 
@@ -105,15 +108,36 @@ void job_change_status (jobid_t jobid, int sig) {
     job_print_update(jobid);
 }
 
-void job_fg_wait (jobid_t jobid) {
+void job_fg_wait (jobid_t jobid, bool print) {
 	if (!valid_jobid(jobid)) return;
-	if (!status_match(jobid, RUNNING)) return;
+	if (!status_match(jobid, RUNNING | STOPPED)) return;
+
+	if (is_terminal) {
+		pid_t pid = jobs[jobid].pid;
+	    setpgid(pid, pid);
+	    tcgetattr(terminal, &termios);
+	    tcsetpgrp(terminal, pid);
+	    tcsetattr(terminal, TCSADRAIN, &jobs[jobid].termios);
+	}
+
+	if (status_match(jobid, STOPPED))
+		job_change_status(jobid, SIGCONT);
+	else if (print)
+		job_print(jobid);
+
 	jobs[jobid].status |= FG;
 
 	signals_unlock();
     while (status_match(jobid, RUNNING))
         sleep(0);
     signals_lock();
+
+    if (is_terminal) {
+    	pid_t pid = getpid();
+    	tcgetattr(terminal, &jobs[jobid].termios);
+    	tcsetpgrp(terminal, pid);
+    	tcsetattr(terminal, TCSADRAIN, &termios);
+    }
 
     job_print_update(jobid);
 }

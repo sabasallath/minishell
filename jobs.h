@@ -60,7 +60,7 @@ int job_kill (jobid_t jobid, int sig);
 void job_change_status (jobid_t jobid, int sig);
 
 // Passe le job d'id `jobid` en premier plan
-void job_fg_wait (jobid_t jobid);
+void job_fg_wait (jobid_t jobid, bool print);
 
 // Applique le changement de statut du job.
 // `wait_status` correspond au résultat

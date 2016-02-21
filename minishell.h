@@ -1,8 +1,12 @@
 #include "csapp.h"
-#include "stdint.h"
-#include "stdbool.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include <termios.h>
 
 #define MAXARGS 128
 
-bool stdin_is_tty;
-#define tty_printf(...) if (stdin_is_tty) printf(__VA_ARGS__)
+bool is_terminal;
+#define tty_printf(...) if (is_terminal) printf(__VA_ARGS__)
+
+#define terminal STDIN_FILENO
+struct termios termios;

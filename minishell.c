@@ -10,7 +10,17 @@ void eval(char*cmdline);
 int main() {
     char cmdline[MAXLINE];                 // ligne de commande
 
-    stdin_is_tty = isatty(fileno(stdin));
+    is_terminal = isatty(terminal);
+    if (is_terminal) {
+        pid_t pid = getpid();
+        setpgid(pid, pid);
+        tcsetpgrp(terminal, pid);
+        tcgetattr(terminal, &termios);
+
+        Signal(SIGTTIN, SIG_IGN);
+        Signal(SIGTTOU, SIG_IGN);
+    }
+
     jobs_init();
 	signals_init();
     dirs_init();

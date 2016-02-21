@@ -11,11 +11,15 @@ bool parseline(char *buf, char **argv);
 bool replace_kill_jobs (char* buf, char** argv);
 
 void exec_command(char** argv) {
-    setpgid(0, 0);
-    if (execvp(argv[0], argv) < 0) {
-        printf("%s: Command not found.\n", argv[0]);
-        exit(127);
+    if (is_terminal) {
+        pid_t pid = getpid();
+        setpgid(pid, pid);
+        tcsetpgrp(terminal, pid);
     }
+
+    execvp(argv[0], argv);
+    printf("%s: Command not found.\n", argv[0]);
+    exit(127);
 }
 
 void eval(char *cmdline) {
@@ -43,7 +47,7 @@ void eval(char *cmdline) {
             job_print_with_pid(jobid);
         }
         else {
-            job_fg_wait(jobid);
+            job_fg_wait(jobid, false);
         }
     }
 

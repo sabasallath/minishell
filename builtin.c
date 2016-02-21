@@ -103,12 +103,7 @@ void builtin_fg (char** argv) {
     if (jobid == INVALID_JOBID)
         return;
 
-    if (job_status_match(jobid, STOPPED))
-        job_change_status(jobid, SIGCONT);
-    else
-        job_print(jobid);
-
-    job_fg_wait(jobid);
+    job_fg_wait(jobid, true);
 }
 
 void builtin_bg (char** argv) {
