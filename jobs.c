@@ -81,10 +81,12 @@ jobid_t jobs_add (pid_t pid, char* cmdline) {
 	jobid_t jobid = jobs_find_first_by_status(FREE);
 	Job* job = jobs + jobid;
 	if (jobid != INVALID_JOBID) {
+		signals_lock();
 		job->pid = pid;
 		job->status = RUNNING;
 		terminal_init_termios(&job->termios);
 		cmdline_copy(cmdline, job->cmdline);
+		signals_unlock();
 	}
 
 	return jobid;

@@ -131,6 +131,8 @@ void builtin_term (char** argv) {
 
 void builtin_wait () {
     jobid_t jobid;
+    // TODO: Est-ce que "waiting = true" est suffisament atomique
+    // ou vaut-il mieux bloquer les signaux ?
     waiting = true;
     while (waiting && (jobid = jobs_find_first_by_status(~(FREE | DONE | STOPPED))) != INVALID_JOBID) {
         sleep(0);
