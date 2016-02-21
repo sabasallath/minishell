@@ -11,6 +11,11 @@ bool parseline(char *buf, char **argv);
 bool replace_kill_jobs (char* buf, char** argv);
 
 void exec_command(char** argv) {
+    Signal(SIGCHLD, SIG_DFL);
+    Signal(SIGINT, SIG_DFL);
+    Signal(SIGTSTP, SIG_DFL);
+    Signal(SIGTTOU, SIG_DFL);
+    Signal(SIGTTIN, SIG_DFL);
     setpgid(0, 0);
     execvp(argv[0], argv);
     printf("%s: Command not found.\n", argv[0]);
