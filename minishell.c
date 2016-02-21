@@ -2,6 +2,7 @@
 #include "minishell.h"
 #include "exit.h"
 #include "signals.h"
+#include "dirs.h"
 
 // fonctions externes
 void eval(char*cmdline);
@@ -12,6 +13,7 @@ int main() {
     stdin_is_tty = isatty(fileno(stdin));
     jobs_init();
 	signals_init();
+    dirs_init();
 
     while (1) {                            // boucle d'interpretation
         tty_printf("<minishell> ");        // message d'invite

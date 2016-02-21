@@ -1,6 +1,7 @@
 #include "csapp.h"
 #include "signals.h"
 #include "jobs.h"
+#include "dirs.h"
 #include "exit.h"
 
 bool waiting = false;
@@ -166,6 +167,11 @@ bool builtin_command(char **argv) {
     builtin("term", builtin_term(argv));
     builtin("stop", builtin_stop(argv));
     builtin("wait", builtin_wait());
+
+    builtin("dirs", dirs_print());
+    builtin("cd", dirs_cd(argv[1]));
+    builtin("pushd", dirs_pushd(argv[1]));
+    builtin("popd", dirs_popd());
 
     return false; // ce n'est pas une commande integree
 }

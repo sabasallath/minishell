@@ -8,6 +8,8 @@ set(minishell_SRC
     builtin.c
     csapp.c
     csapp.h
+    dirs.c
+    dirs.h
     eval.c
     exit.c
     exit.h
