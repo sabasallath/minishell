@@ -19,7 +19,9 @@ set(minishell_SRC
     minishell.h
     parseline.c
     signals.c
-    signals.h)
+    signals.h
+    terminal.c
+    terminal.h)
 
 add_executable(minishell ${minishell_SRC})
 target_link_libraries(minishell pthread)

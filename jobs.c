@@ -1,5 +1,6 @@
 #include "jobs.h"
 #include "signals.h"
+#include "terminal.h"
 
 /////////////////////////////////////////////////////
 // Type et constantes
@@ -73,8 +74,7 @@ jobid_t jobs_add (pid_t pid, char* cmdline) {
 	if (jobid != INVALID_JOBID) {
 		job->pid = pid;
 		job->status = RUNNING;
-		if (is_terminal)
-			job->termios = termios;
+		terminal_init_termios(&job->termios);
 		cmdline_copy(cmdline, job->cmdline);
 	}
 
@@ -112,13 +112,7 @@ void job_fg_wait (jobid_t jobid, bool print) {
 	if (!valid_jobid(jobid)) return;
 	if (!status_match(jobid, RUNNING | STOPPED)) return;
 
-	if (is_terminal) {
-		pid_t pid = jobs[jobid].pid;
-	    setpgid(pid, pid);
-	    tcgetattr(terminal, &termios);
-	    tcsetpgrp(terminal, pid);
-	    tcsetattr(terminal, TCSADRAIN, &jobs[jobid].termios);
-	}
+	terminal_grab(jobs[jobid].pid, &jobs[jobid].termios);
 
 	if (status_match(jobid, STOPPED))
 		job_change_status(jobid, SIGCONT);
@@ -132,12 +126,7 @@ void job_fg_wait (jobid_t jobid, bool print) {
         sleep(0);
     signals_lock();
 
-    if (is_terminal) {
-    	pid_t pid = getpid();
-    	tcgetattr(terminal, &jobs[jobid].termios);
-    	tcsetpgrp(terminal, pid);
-    	tcsetattr(terminal, TCSADRAIN, &termios);
-    }
+    terminal_restore(&jobs[jobid].termios);
 
     job_print_update(jobid);
 }

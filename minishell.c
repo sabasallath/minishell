@@ -3,6 +3,7 @@
 #include "exit.h"
 #include "signals.h"
 #include "dirs.h"
+#include "terminal.h"
 
 // fonctions externes
 void eval(char*cmdline);
@@ -10,26 +11,16 @@ void eval(char*cmdline);
 int main() {
     char cmdline[MAXLINE];                 // ligne de commande
 
-    is_terminal = isatty(terminal);
-    if (is_terminal) {
-        pid_t pid = getpid();
-        setpgid(pid, pid);
-        tcsetpgrp(terminal, pid);
-        tcgetattr(terminal, &termios);
-
-        Signal(SIGTTIN, SIG_IGN);
-        Signal(SIGTTOU, SIG_IGN);
-    }
-
+    terminal_init();
     jobs_init();
 	signals_init();
     dirs_init();
 
     while (1) {                            // boucle d'interpretation
-        tty_printf("<minishell> ");        // message d'invite
+        terminal_printf("<minishell> ");        // message d'invite
         Fgets(cmdline, MAXLINE, stdin);    // lire commande
         if (feof(stdin)) {                 // fin (control-D)
-            tty_printf("\n");
+            terminal_printf("\n");
             exit_force();
         }
         else

@@ -11,12 +11,6 @@ bool parseline(char *buf, char **argv);
 bool replace_kill_jobs (char* buf, char** argv);
 
 void exec_command(char** argv) {
-    if (is_terminal) {
-        pid_t pid = getpid();
-        setpgid(pid, pid);
-        tcsetpgrp(terminal, pid);
-    }
-
     execvp(argv[0], argv);
     printf("%s: Command not found.\n", argv[0]);
     exit(127);

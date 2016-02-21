@@ -1,5 +1,6 @@
 #include "minishell.h"
 #include "jobs.h"
+#include "terminal.h"
 #include "signals.h"
 
 bool waiting;
@@ -7,11 +8,11 @@ bool waiting;
 void handler_sigint (int sig) {
     jobid_t jobid = jobs_find_first_by_status(FG);
     if (waiting) {
-        tty_printf("\n"); // Retour a la ligne après le symbole de controle
+        terminal_printf("\n"); // Retour a la ligne après le symbole de controle
         waiting = false;
     }
     else if (jobid != INVALID_JOBID) {
-        tty_printf("\n"); // Retour a la ligne après le symbole de controle
+        terminal_printf("\n"); // Retour a la ligne après le symbole de controle
         if (job_status_match(jobid, STOPPED))
             job_kill(jobid, SIGCONT);
         job_kill(jobid, SIGINT);
@@ -21,7 +22,7 @@ void handler_sigint (int sig) {
 void handler_sigtstp (int sig) {
     jobid_t jobid = jobs_find_first_by_status(FG);
     if (jobid != INVALID_JOBID) {
-        tty_printf("\n"); // Retour a la ligne après le symbole de controle
+        terminal_printf("\n"); // Retour a la ligne après le symbole de controle
         job_kill(jobid, SIGSTOP);
     }
 }
