@@ -15,13 +15,14 @@ int main() {
     dirs_init();
 
     while (1) {                            // boucle d'interpretation
-        terminal_printf("<minishell> ");        // message d'invite
+        terminal_printf("<minishell> ");   // message d'invite
         Fgets(cmdline, MAXLINE, stdin);    // lire commande
         if (feof(stdin)) {                 // fin (control-D)
             terminal_printf("\n");
             exit_force();
         }
-        else
+        else {
             eval(cmdline);                 // interpreter commande
+        }
     }
 }

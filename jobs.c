@@ -15,7 +15,8 @@ typedef struct {
     pid_t pid;
     JobStatus status;
     char cmdline[MAXLINE];
-	struct termios termios;
+
+	TerminalControl terminal_ctl;
 
     Updated updated;
     int wait_status;
@@ -43,9 +44,9 @@ bool valid_jobid (jobid_t jobid) {
 // Fonctions pour les signaux (voir signals.c)
 /////////////////////////////////////////////////////
 
-void signals_init ();
-void signals_lock ();
-void signals_unlock ();
+void jobs_signals_init ();
+void jobs_signals_lock ();
+void jobs_signals_unlock ();
 
 /////////////////////////////////////////////////////
 // Fonctions de gestion des jobs
@@ -57,7 +58,7 @@ void jobs_init () {
 		jobs[i].status = FREE;
 	}
 
-	signals_init();
+	jobs_signals_init();
 }
 
 void cmdline_copy (char* src, char dst[]) {
@@ -78,17 +79,17 @@ void cmdline_copy (char* src, char dst[]) {
 }
 
 jobid_t jobs_add (pid_t pid, char* cmdline) {
+	jobs_signals_lock();
 	jobid_t jobid = jobs_find_first_by_status(FREE);
 	Job* job = jobs + jobid;
 	if (jobid != INVALID_JOBID) {
-		signals_lock();
 		job->pid = pid;
 		job->status = RUNNING;
-		terminal_init_termios(&job->termios);
+		terminal_init_control(&job->terminal_ctl);
 		cmdline_copy(cmdline, job->cmdline);
-		signals_unlock();
 	}
 
+	jobs_signals_unlock();
 	return jobid;
 }
 
@@ -97,14 +98,18 @@ int job_kill (jobid_t jobid, int sig) {
 }
 
 void job_change_status (jobid_t jobid, int sig) {
+	jobs_signals_lock();
+
 	bool continue_before = status_match(jobid, STOPPED)
 			&& sig != SIGCONT
 			&& sig != SIGSTOP
 			&& sig != SIGTSTP;
-
 	if (continue_before)
 		job_kill(jobid, SIGCONT);
+
     job_kill(jobid, sig);
+
+    jobs_signals_unlock();
 
     // On attends un peu pour laisser le temps au signal d'avoir un effet
     // Certain signaux peuvent avoir été redéfini par le processus enfant
@@ -112,6 +117,10 @@ void job_change_status (jobid_t jobid, int sig) {
     // Il n'est donc pas envisageable d'attendre indéfiniment. Tant pis.
     int time = 1;
     while ((time = sleep(time)) > 0) {
+    	// Si sleep s'arrete avant le temps imparti, c'est potentiellement
+    	// parce que le changement de statut attendu est effectué.
+    	// On vérifie donc si c'est le cas pour pouvoir rendre la main au
+    	// plus tôt.
     	if (jobs[jobid].updated && (!continue_before || !status_match(jobid, RUNNING))) {
     		break;
     	}
@@ -124,27 +133,32 @@ void job_fg_wait (jobid_t jobid, bool print) {
 	if (!valid_jobid(jobid)) return;
 	if (!status_match(jobid, RUNNING | STOPPED)) return;
 
-	terminal_grab(jobs[jobid].pid, &jobs[jobid].termios);
+	jobs_signals_lock();
+
+	terminal_give_control(jobs[jobid].pid, &jobs[jobid].terminal_ctl);
 
 	if (status_match(jobid, STOPPED))
+		// Si le job est stoppé, on doit commencer par essayer de le
+		// relancer
 		job_change_status(jobid, SIGCONT);
 	else if (print)
 		job_print(jobid);
 
-	signals_lock();
 	jobs[jobid].status |= FG;
-	signals_unlock();
+	jobs_signals_unlock();
 
 	while (status_match(jobid, RUNNING))
         sleep(1);
 
-    terminal_release(&jobs[jobid].termios);
+    terminal_take_back_control(&jobs[jobid].terminal_ctl);
     job_print_update(jobid);
 }
 
 void job_update (jobid_t jobid, int wait_status) {
 	if (valid_jobid(jobid)) {
-		jobs[jobid].updated = jobs[jobid].status & FG ? YES_WHILE_FG : YES;
+		jobs[jobid].updated = jobs[jobid].status & FG
+				? YES_WHILE_FG
+				: YES;
 		jobs[jobid].wait_status = wait_status;
 
 		if (WIFEXITED(wait_status)) {
@@ -174,6 +188,8 @@ void job_do_print_update (jobid_t jobid) {
 	}
 	else if (WIFSIGNALED(wait_status)) {
 		jobs[jobid].status = FREE;
+		// On ne signale pas un arrêt par un SIGINT par un message
+		// si le job était au premier plan
 		if (!while_fg || WTERMSIG(wait_status) != SIGINT)
 			job_print_with_status(jobid, strsignal(WTERMSIG(wait_status)));
 	}
@@ -188,21 +204,21 @@ void job_do_print_update (jobid_t jobid) {
 
 void jobs_print_update () {
 	jobid_t i;
-	signals_lock();
+	jobs_signals_lock();
 	for (i = 0; i < MAXJOBS; i++) {
 		if (jobs[i].updated) {
 			job_do_print_update(i);
 		}
 	}
-	signals_unlock();
+	jobs_signals_unlock();
 }
 
 void job_print_update (jobid_t jobid) {
-	signals_lock();
+	jobs_signals_lock();
 	if (valid_jobid(jobid) && jobs[jobid].updated) {
 		job_do_print_update(jobid);
 	}
-	signals_unlock();
+	jobs_signals_unlock();
 }
 
 /////////////////////////////////////////////////////

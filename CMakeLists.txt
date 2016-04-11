@@ -15,10 +15,10 @@ set(minishell_SRC
     exit.h
     jobs.c
     jobs.h
+    jobs_signals.c
     minishell.c
     minishell.h
     parseline.c
-    signals.c
     terminal.c
     terminal.h)
 

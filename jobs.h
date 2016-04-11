@@ -55,8 +55,8 @@ jobid_t jobs_add (pid_t pid, char* cmdline);
 int job_kill (jobid_t jobid, int sig);
 
 // Envoi le signal `sig` de changement de status au job d'id `jobid`
-// Attends un certain temps pour permettre au changement de statut
-// de se propager.
+// Attends un certain temps (best effort) pour permettre au changement
+// de statut de se propager.
 void job_change_status (jobid_t jobid, int sig);
 
 // Passe le job d'id `jobid` en premier plan

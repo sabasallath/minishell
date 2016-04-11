@@ -3,7 +3,7 @@
 #include "dirs.h"
 #include "exit.h"
 
-bool waiting = false;
+bool builtin_waiting = false;
 
 jobid_t parse_jobid (char* arg) {
     if (*arg == '\0') {
@@ -131,15 +131,13 @@ void builtin_term (char** argv) {
 
 void builtin_wait () {
     jobid_t jobid;
-    // TODO: Est-ce que "waiting = true" est suffisament atomique
-    // ou vaut-il mieux bloquer les signaux ?
-    waiting = true;
-    while (waiting && (jobid = jobs_find_first_by_status(~(FREE | DONE | STOPPED))) != INVALID_JOBID) {
+    builtin_waiting = true;
+    while (builtin_waiting && (jobid = jobs_find_first_by_status(~(FREE | DONE | STOPPED))) != INVALID_JOBID) {
         sleep(0);
         jobs_print_update();
     }
 
-    waiting = false;
+    builtin_waiting = false;
 }
 
 #define builtin(name, exec) if (strcmp(argv[0], name) == 0) { exec; return true; }

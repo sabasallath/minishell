@@ -16,14 +16,14 @@ void try_terminate_jobs () {
     }
 
     // On attends un peu que les jobs aient le temps de se terminer
-    int time = 1;
+    int time = 3;
     while ((time = sleep(time)) > 0) {
         jobid_t jobid = jobs_find_first_by_status(~(FREE | DONE));
         if (jobid == INVALID_JOBID) // Tous les jobs terminés
             break;
     }
 
-    jobs_print(~FREE, false);  // Signal les jobs non terminés a l'utilisateur
+    jobs_print(~FREE, false);  // Signal les jobs non terminés à l'utilisateur
     jobs_print_update();       // Traite et affiche les jobs terminés
 }
 

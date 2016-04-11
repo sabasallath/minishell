@@ -2,12 +2,12 @@
 #include "jobs.h"
 #include "terminal.h"
 
-bool waiting;
+bool builtin_waiting;
 
 void handler_sigint (int sig) {
-    if (waiting) {
+    if (builtin_waiting) {
         terminal_printf("\n"); // Retour a la ligne après le symbole de controle
-        waiting = false;
+        builtin_waiting = false;
     }
 }
 
@@ -31,27 +31,23 @@ sigset_t signals_to_block;
 
 // Initialise la gestion des signaux utilisées par le shell
 // (assigne les handlers et prépare les bloquages)
-void signals_init () {
+void jobs_signals_init () {
     Signal(SIGCHLD, handler_sigchld);
     Signal(SIGINT, handler_sigint);
     Signal(SIGTSTP, SIG_IGN);
 
     Sigemptyset(&signals_to_block);
     Sigaddset(&signals_to_block, SIGCHLD);
-    // TODO: Est-il vraiment nécessaire de bloquer les signaux
-    // SIGINT et SIGTSTP ?
-    Sigaddset(&signals_to_block, SIGINT);
-    Sigaddset(&signals_to_block, SIGTSTP);
 }
 
 // Bloque les signaux importants pour le shell s'ils ne sont
 // pas déjà bloqués
-void signals_lock (char* desc) {
+void jobs_signals_lock (char* desc) {
     Sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
 }
 
 // Débloque les signaux importants pour le shell s'ils ont
 // été bloqués au préalable par un appel à `signals_lock`
-void signals_unlock (char* desc) {
+void jobs_signals_unlock (char* desc) {
     Sigprocmask(SIG_UNBLOCK, &signals_to_block, NULL);
 }
